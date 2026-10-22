@@ -2,9 +2,9 @@ import Foundation
 
 /// Labels for the menus, alerts and the play room; what the characters say lives in the Dialogue files.
 enum UIText {
-    case characters, skillHint, playRoom, agentCharacters, chooseAgents
+    case characters, playRoom, agentCharacters, chooseAgents
     case agentIdle, agentWorking, agentDone, agentNeedsYou
-    case hookInstalled, installHook, kickNow, tidyDesktop
+    case hookInstalled, installHook
     case finderBlocked, openAutomation, sortByLocked, turnOffSortBy, quit
     case showRoom, scenery, inRoom, editRoom, done, roomHint, politics
     case sceneCozy, sceneKimetsu, sceneOnePiece, sceneAttackOnTitan, sceneJujutsuKaisen, sceneHunterXHunter, sceneUnitedNations
@@ -12,6 +12,11 @@ enum UIText {
     case hookQuestion, hookExplain, install, cancel, hookDone, hookDoneInfo, hookFailed
     /// "%@" is the permission error code.
     case finderNotAllowed
+    /// "%@" is a version number (the current one, or the one available).
+    case checkUpdates, upToDate, updateAvailable
+    case checkingUpdates, installingUpdate, updateFailed
+    /// "%@" is the folder the app is in.
+    case updateNoPermission
 }
 
 /// `key` in the current language, falling back to Vietnamese; "%@" becomes `argument`.
@@ -23,7 +28,6 @@ func ui(_ key: UIText, _ argument: String = "") -> String {
 private let uiTexts: [Language: [UIText: String]] = [
     .vi: [
         .characters: "Nhân vật",
-        .skillHint: "Chuột phải vào nhân vật để dùng kỹ năng đặc biệt",
         .playRoom: "Phòng chơi",
         .agentCharacters: "Nhân vật cho AI agent",
         .chooseAgents: "Chọn agent",
@@ -33,8 +37,6 @@ private let uiTexts: [Language: [UIText: String]] = [
         .agentNeedsYou: "cần bạn duyệt",
         .hookInstalled: "✓ Đã cài hook trạng thái cho Claude Code",
         .installHook: "Cài hook trạng thái cho Claude Code…",
-        .kickNow: "Đá một icon ngay",
-        .tidyDesktop: "Dọn dẹp Desktop",
         .finderBlocked: "⚠️ Chưa điều khiển được Finder",
         .openAutomation: "Mở cài đặt quyền Automation…",
         .sortByLocked: "⚠️ Desktop đang bật Sort By — icon bị khoá",
@@ -65,10 +67,16 @@ private let uiTexts: [Language: [UIText: String]] = [
         .hookDoneInfo: "Áp dụng cho các phiên Claude Code mở từ bây giờ (phiên đang chạy cần khởi động lại).",
         .hookFailed: "Không cài được hook",
         .finderNotAllowed: "OllieBoard chưa được phép điều khiển Finder (%@).",
+        .checkUpdates: "Kiểm tra cập nhật (đang dùng bản %@)",
+        .upToDate: "✓ Đã là bản mới nhất (%@)",
+        .updateAvailable: "⬆️ Cập nhật lên bản %@",
+        .checkingUpdates: "Đang kiểm tra cập nhật…",
+        .installingUpdate: "Đang tải và cài bản cập nhật…",
+        .updateFailed: "Không cập nhật được",
+        .updateNoPermission: "OllieBoard không có quyền ghi vào %@. Hãy tải bản mới từ trang Releases và cài thủ công.",
     ],
     .en: [
         .characters: "Characters",
-        .skillHint: "Right-click a character to use its special moves",
         .playRoom: "Play room",
         .agentCharacters: "Characters for AI agents",
         .chooseAgents: "Choose agents",
@@ -78,8 +86,6 @@ private let uiTexts: [Language: [UIText: String]] = [
         .agentNeedsYou: "needs your approval",
         .hookInstalled: "✓ Claude Code status hook installed",
         .installHook: "Install the Claude Code status hook…",
-        .kickNow: "Kick an icon now",
-        .tidyDesktop: "Tidy up the Desktop",
         .finderBlocked: "⚠️ Can't control Finder",
         .openAutomation: "Open Automation settings…",
         .sortByLocked: "⚠️ Desktop Sort By is on — icons are locked",
@@ -110,10 +116,16 @@ private let uiTexts: [Language: [UIText: String]] = [
         .hookDoneInfo: "It applies to Claude Code sessions started from now on (running sessions need a restart).",
         .hookFailed: "Couldn't install the hook",
         .finderNotAllowed: "OllieBoard isn't allowed to control Finder (%@).",
+        .checkUpdates: "Check for updates (using %@)",
+        .upToDate: "✓ Up to date (%@)",
+        .updateAvailable: "⬆️ Update to %@",
+        .checkingUpdates: "Checking for updates…",
+        .installingUpdate: "Downloading and installing the update…",
+        .updateFailed: "Couldn't update",
+        .updateNoPermission: "OllieBoard can't write to %@. Download the new version from the Releases page and install it by hand.",
     ],
     .ja: [
         .characters: "キャラクター",
-        .skillHint: "キャラクターを右クリックすると必殺技が使えます",
         .playRoom: "プレイルーム",
         .agentCharacters: "AIエージェントのキャラクター",
         .chooseAgents: "エージェントを選ぶ",
@@ -123,8 +135,6 @@ private let uiTexts: [Language: [UIText: String]] = [
         .agentNeedsYou: "承認が必要です",
         .hookInstalled: "✓ Claude Code の状態フックをインストール済み",
         .installHook: "Claude Code の状態フックをインストール…",
-        .kickNow: "今すぐアイコンを蹴る",
-        .tidyDesktop: "デスクトップを片付ける",
         .finderBlocked: "⚠️ Finder を操作できません",
         .openAutomation: "オートメーションの設定を開く…",
         .sortByLocked: "⚠️ デスクトップの「並べ替え」がオン — アイコンが固定されています",
@@ -155,5 +165,12 @@ private let uiTexts: [Language: [UIText: String]] = [
         .hookDoneInfo: "これから開始する Claude Code のセッションに適用されます（実行中のセッションは再起動が必要です）。",
         .hookFailed: "フックをインストールできませんでした",
         .finderNotAllowed: "OllieBoard には Finder を操作する権限がありません（%@）。",
+        .checkUpdates: "アップデートを確認（現在 %@）",
+        .upToDate: "✓ 最新バージョンです（%@）",
+        .updateAvailable: "⬆️ %@ にアップデート",
+        .checkingUpdates: "アップデートを確認中…",
+        .installingUpdate: "アップデートをダウンロードしてインストール中…",
+        .updateFailed: "アップデートできませんでした",
+        .updateNoPermission: "OllieBoard は %@ に書き込めません。Releases ページから新しいバージョンをダウンロードして手動でインストールしてください。",
     ],
 ]

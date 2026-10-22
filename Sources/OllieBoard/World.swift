@@ -100,12 +100,6 @@ final class World {
         }
     }
 
-    /// Menu command: the character outside the room with the strongest liking for `behavior` does it now.
-    func command(_ behavior: Behavior) {
-        let pet = pets.values.filter { $0.agent == nil && !$0.inRoom }.max { $0.character.weights[behavior, default: 0] < $1.character.weights[behavior, default: 0] }
-        pet?.command(behavior)
-    }
-
     /// Sometimes a friend (on the same side of the room walls) walks over to cheer up an upset (shy) pet.
     func requestComfort(for pet: Pet) {
         guard Double.random(in: 0..<1) < 0.6 else { return }

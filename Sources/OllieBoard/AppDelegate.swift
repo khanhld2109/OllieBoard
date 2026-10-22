@@ -3,6 +3,8 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let world = World()
     private var statusItem: NSStatusItem!
+    private let updater = Updater()
+    private var updateTimer: Timer?
     private let enabledKey = "enabledCharacters"
 
     private var enabledIDs: Set<String> {
@@ -21,6 +23,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for character in allCharacters where enabledIDs.contains(character.id) {
             world.setEnabled(character, true)
         }
+
+        if Updater.canUpdate {
+            updater.onInstallFailed = { message in
+                NSApp.activate(ignoringOtherApps: true)
+                let alert = NSAlert()
+                alert.alertStyle = .warning
+                alert.messageText = ui(.updateFailed)
+                alert.informativeText = message
+                alert.runModal()
+            }
+            updater.check()
+            updateTimer = Timer.scheduledTimer(withTimeInterval: 6 * 3600, repeats: true) { [weak self] _ in self?.updater.check() }
+        }
     }
 
     // Rebuilt every time it opens so warnings reflect Finder's current state.
@@ -30,7 +45,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for group in characterGroups(#selector(toggleCharacter(_:)), isOn: { self.world.pets[$0.id] != nil }) {
             menu.addItem(group)
         }
-        menu.addItem(withTitle: "    " + ui(.skillHint), action: nil, keyEquivalent: "").isEnabled = false
         menu.addItem(withTitle: ui(.playRoom), action: nil, keyEquivalent: "").submenu = roomMenu()
 
         let languageItem = menu.addItem(withTitle: "Ngôn ngữ / Language / 言語", action: nil, keyEquivalent: "")
@@ -74,10 +88,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
 
-        menu.addItem(.separator())
-        addItem(menu, ui(.kickNow), #selector(kickNow))
-        addItem(menu, ui(.tidyDesktop), #selector(arrangeNow))
-
         if let error = world.desktop.lastError {
             menu.addItem(.separator())
             let warn = menu.addItem(withTitle: ui(.finderBlocked), action: nil, keyEquivalent: "")
@@ -91,7 +101,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
+        if Updater.canUpdate { addUpdateItem(menu) }
         addItem(menu, ui(.quit), #selector(quit), key: "q")
+    }
+
+    /// One item that shows where the update check is and, when a newer version is out, installs it.
+    private func addUpdateItem(_ menu: NSMenu) {
+        let current = Updater.currentVersion
+        switch updater.state {
+        case .available(let version, _):
+            addItem(menu, ui(.updateAvailable, version), #selector(installUpdate))
+        case .installing:
+            menu.addItem(withTitle: ui(.installingUpdate), action: nil, keyEquivalent: "").isEnabled = false
+        case .checking:
+            menu.addItem(withTitle: ui(.checkingUpdates), action: nil, keyEquivalent: "").isEnabled = false
+        case .upToDate:
+            addItem(menu, ui(.upToDate, current), #selector(checkForUpdates))
+        case .idle:
+            addItem(menu, ui(.checkUpdates, current), #selector(checkForUpdates))
+        case .failed(let message):
+            let item = menu.addItem(withTitle: ui(.checkUpdates, current), action: #selector(checkForUpdates), keyEquivalent: "")
+            item.target = self
+            item.toolTip = message
+        }
     }
 
     private func roomMenu() -> NSMenu {
@@ -220,8 +252,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         result.runModal()
     }
 
-    @objc private func kickNow() { world.command(.kick) }
-    @objc private func arrangeNow() { world.command(.arrange) }
+    @objc private func checkForUpdates() { updater.check() }
+    @objc private func installUpdate() { updater.install() }
 
     @objc private func openAutomationSettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!)

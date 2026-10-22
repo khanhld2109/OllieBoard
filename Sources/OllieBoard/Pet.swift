@@ -254,12 +254,6 @@ final class Pet {
         current = nil
     }
 
-    /// Externally requested behavior (from the menu).
-    func command(_ behavior: Behavior) {
-        guard !dragging, !leaving else { return }
-        interrupt(plan(for: behavior))
-    }
-
     // MARK: - Behaviors
 
     private func chooseBehavior() -> Behavior {
