@@ -88,6 +88,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
 
+        let browserItem = menu.addItem(withTitle: ui(.browserInteraction), action: #selector(toggleBrowser), keyEquivalent: "")
+        browserItem.target = self
+        browserItem.state = world.browser.enabled ? .on : .off
+        if world.browser.enabled && !world.browser.isTrusted {
+            menu.addItem(withTitle: "    " + ui(.browserNeedsAccess), action: nil, keyEquivalent: "").isEnabled = false
+            addItem(menu, "    " + ui(.openAccessibility), #selector(openAccessibilitySettings))
+        }
+
+        if world.browser.enabled {
+            let domItem = menu.addItem(withTitle: "    " + ui(.editPage), action: #selector(toggleEditPage), keyEquivalent: "")
+            domItem.target = self
+            domItem.state = world.browser.domEnabled ? .on : .off
+            if world.browser.domEnabled, let error = world.browser.domError {
+                let warn = menu.addItem(withTitle: "        " + ui(.editPageBlocked), action: nil, keyEquivalent: "")
+                warn.toolTip = error
+                warn.isEnabled = false
+            }
+        }
+
         if let error = world.desktop.lastError {
             menu.addItem(.separator())
             let warn = menu.addItem(withTitle: ui(.finderBlocked), action: nil, keyEquivalent: "")
@@ -257,6 +276,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func openAutomationSettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!)
+    }
+
+    @objc private func toggleBrowser() {
+        world.browser.enabled.toggle()
+        if world.browser.enabled && !world.browser.isTrusted { world.browser.requestAccess() }
+    }
+
+    @objc private func toggleEditPage() { world.browser.domEnabled.toggle() }
+
+    @objc private func openAccessibilitySettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
     @objc private func disableAutoArrange() { world.desktop.disableAutoArrange {} }
