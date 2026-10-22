@@ -11,6 +11,10 @@ enum Skill: String {
     case flowerField, mimic         // Frieren
     case guitarSolo, melt           // Bocchi
     case morningStar, oniForm       // Rem
+    case wall, tariff               // Trump
+    case judo, bearRide             // Putin
+    case parade, aiRobot            // Xi
+    case applause, missile          // Kim
 
     var title: String { skillNames[Language.current]?[self] ?? rawValue }
 }
@@ -65,4 +69,22 @@ let allCharacters: [Character] = [
         id: "rem", name: "Rem", anime: "Re:Zero", walkSpeed: 105,
         weights: [.wander: 2, .kick: 1, .arrange: 4, .bored: 1, .sleep: 0.5, .grumpy: 1, .happy: 1.5, .social: 1.5, .skill: 1],
         grumpyAnim: .grumpy, shy: false, prankster: false, skills: [.morningStar, .oniForm]),
+
+    // Playful political caricatures, same sketch skeleton as the anime cast.
+    Character(
+        id: "trump", name: "Donald Trump", anime: "Chính trị gia", walkSpeed: 105,
+        weights: [.wander: 2.5, .kick: 3, .arrange: 1, .bored: 1, .sleep: 0.8, .grumpy: 1.2, .happy: 2.5, .social: 3, .skill: 1.5],
+        grumpyAnim: .grumpy, shy: false, prankster: true, skills: [.wall, .tariff]),
+    Character(
+        id: "putin", name: "Vladimir Putin", anime: "Chính trị gia", walkSpeed: 100,
+        weights: [.wander: 2, .kick: 1.5, .arrange: 3, .bored: 2, .sleep: 1, .grumpy: 1, .happy: 1, .social: 1, .skill: 1.2],
+        grumpyAnim: .grumpy, shy: false, prankster: false, skills: [.judo, .bearRide]),
+    Character(
+        id: "xi", name: "Tập Cận Bình", anime: "Chính trị gia", walkSpeed: 90,
+        weights: [.wander: 2, .kick: 1, .arrange: 4, .bored: 1.5, .sleep: 0.8, .grumpy: 0.8, .happy: 1, .social: 1.2, .skill: 1.2],
+        grumpyAnim: .grumpy, shy: false, prankster: false, skills: [.parade, .aiRobot]),
+    Character(
+        id: "kim", name: "Kim Jong Un", anime: "Chính trị gia", walkSpeed: 85,
+        weights: [.wander: 2, .kick: 1.5, .arrange: 1.5, .bored: 1, .sleep: 0.7, .grumpy: 1, .happy: 3, .social: 3, .skill: 1.5],
+        grumpyAnim: .grumpy, shy: false, prankster: false, skills: [.applause, .missile]),
 ]

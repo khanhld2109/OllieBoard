@@ -24,6 +24,14 @@ func drawSkill(_ ctx: CGContext, _ look: Look, _ which: Int, _ i: Int) {
     case (.bocchi, 2): bocchiMelt(ctx, look, i)
     case (.rem, 1): remMorningStar(ctx, look, i)
     case (.rem, 2): remOni(ctx, look, i)
+    case (.trumpSwoop, 1): trumpWall(ctx, look, i)
+    case (.trumpSwoop, 2): trumpTariff(ctx, look, i)
+    case (.putinShort, 1): putinJudo(ctx, look, i)
+    case (.putinShort, 2): putinBear(ctx, look, i)
+    case (.xiSlick, 1): xiParade(ctx, look, i)
+    case (.xiSlick, 2): xiRobot(ctx, look, i)
+    case (.kimSide, 1): kimApplause(ctx, look, i)
+    case (.kimSide, 2): kimMissile(ctx, look, i)
     default: break
     }
 }
@@ -470,5 +478,450 @@ private func remOni(_ ctx: CGContext, _ look: Look, _ i: Int) {
             p.closeSubpath()
         }, white, outlineWidth: 1.4)
         ctx.stroke({ $0.move(to: CGPoint(x: base.x - 2, y: base.y - 5)); $0.addLine(to: CGPoint(x: base.x + 2.5, y: base.y - 6)) }, rgb(0xC3C7D6), 1)
+    }
+}
+
+// MARK: - Trump: the wall and tariffs
+
+/// A thumbs-up on the hand at `h`.
+private func drawThumb(_ ctx: CGContext, _ h: CGPoint, _ look: Look) {
+    ctx.fill({ $0.addRoundedRect(in: CGRect(x: h.x - 1.6, y: h.y - 8.5, width: 3.6, height: 7), cornerWidth: 1.8, cornerHeight: 1.8) },
+             look.skin, outlineWidth: 1.1)
+}
+
+/// The wall itself rises in the window (Effect.wall); here he sells it with the "huge" gesture and two thumbs up.
+private func trumpWall(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    var p = Pose()
+    p.armFront = [0.3, 1.5, 2.3, 2.5, 2.45, 2.5, 2.45, 2.5][i]
+    p.armBack = [0.2, 1.3, 2.1, 2.3, 2.25, 2.3, 2.25, 2.3][i]
+    p.lean = [0, -0.04, -0.06, -0.05, -0.05, -0.05, -0.05, -0.05][i]
+    p.bob = [0, -1, -2, -1, -2, -1, -2, -1][i]
+    p.eyes = i < 2 ? .angry : .happy
+    p.brows = i < 2 ? .angry : .raised
+    p.mouth = i < 2 ? .open : .grin
+    drawCharacter(ctx, p, look)
+    if i >= 3 {
+        inBody(ctx, p) {
+            drawThumb(ctx, hand(p.armFront, front: true), look)
+            drawThumb(ctx, hand(p.armBack, front: false), look)
+        }
+    }
+}
+
+/// The famous tariff board, `lift` points below its held position.
+private func drawTariffBoard(_ ctx: CGContext, lift: CGFloat) {
+    let r = CGRect(x: 28, y: -92 + lift, width: 35, height: 44)
+    ctx.fill({ $0.addRoundedRect(in: r, cornerWidth: 2, cornerHeight: 2) }, white, outlineWidth: 1.6)
+    ctx.saveGState()
+    ctx.addRect(r); ctx.clip()
+    ctx.setFillColor(rgb(0x1F3366)); ctx.fill(CGRect(x: r.minX, y: r.minY, width: r.width, height: 11))
+    drawText(ctx, "TARIFF", size: 7, at: CGPoint(x: r.minX + 4, y: r.minY + 8), color: white)
+    for (k, w) in [CGFloat(24), 17, 27, 12].enumerated() {
+        let y = r.minY + 14 + CGFloat(k) * 4.5
+        ctx.setFillColor(rgb(0xD8343A)); ctx.fill(CGRect(x: r.minX + 4, y: y, width: w, height: 2.6))
+    }
+    drawText(ctx, "100%", size: 10, at: CGPoint(x: r.minX + 3, y: r.maxY - 3), color: rgb(0xD8343A))
+    ctx.restoreGState()
+}
+
+private func trumpTariff(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    var p = Pose()
+    let lift: CGFloat = [44, 24, 6, 0, -1, 0, -1, 0][i]
+    p.armFront = [0.4, 1.5, 2.0, 2.1, 2.15, 2.1, 2.15, 2.1][i]
+    p.armBack = [0.2, 0.6, 1.1, 1.4, 1.5, 1.4, 1.5, 1.4][i]
+    p.lean = [0, 0.02, -0.03, -0.05, -0.05, -0.05, -0.05, -0.05][i]
+    p.eyes = i < 3 ? .angry : .half
+    p.brows = .angry
+    p.mouth = i < 3 ? .flat : (i % 2 == 0 ? .open : .smirk)
+    p.tilt = -0.05
+    drawCharacter(ctx, p, look)
+    inBody(ctx, p) {
+        drawTariffBoard(ctx, lift: lift)
+        drawArm(ctx, p.armFront, look, front: true)
+        // "Look at this!" lines around the board.
+        if i >= 3 {
+            for k in 0..<3 {
+                let a = -0.9 + CGFloat(k) * 0.45
+                let c = CGPoint(x: 46, y: -70)
+                let r1: CGFloat = 27 + CGFloat(i % 2) * 2
+                ctx.stroke({ path in
+                    path.move(to: CGPoint(x: c.x + cos(a) * r1, y: c.y + sin(a) * r1))
+                    path.addLine(to: CGPoint(x: c.x + cos(a) * (r1 + 6), y: c.y + sin(a) * (r1 + 6)))
+                }, rgb(0xFFD84D), 2.2)
+            }
+        }
+    }
+}
+
+// MARK: - Putin: the judo throw and the bear
+
+private func putinJudo(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    var p = Pose()
+    p.legFront = [0, 0.3, 0.5, 0.4, 0.2, 0.1, 0, 0][i]
+    p.legBack = [-0.2, -0.4, -0.6, -0.4, -0.2, 0, 0, 0][i]
+    p.armFront = [0.4, 1.4, 2.0, 2.6, 3.0, 2.2, 1.0, 0.3][i]
+    p.armBack = [0.2, 1.0, 1.6, 2.2, 2.6, 1.8, 0.8, 0.2][i]
+    p.lean = [0, 0.08, 0.14, 0.1, -0.06, -0.1, -0.04, 0][i]
+    p.bob = [0, 1, 2, 1, -1, 0, 0, 0][i]
+    p.eyes = .angry
+    p.brows = .angry
+    p.mouth = .flat
+    // He changes into a white judo gi with a black belt for the throw.
+    var gi = look
+    gi.outfit = .judogi
+    gi.sleeve = rgb(0xF6F6F8)
+    gi.sleeveDark = rgb(0xD5D7DE)
+    drawCharacter(ctx, p, gi)
+    if (5...7).contains(i) {
+        inBody(ctx, p) {
+            // Dust where the throw lands.
+            for k in 0..<3 {
+                let spread = CGFloat(i - 4) * 4
+                ctx.fillEllipse(CGPoint(x: 32 + CGFloat(k - 1) * (8 + spread), y: -3 - CGFloat(k % 2) * 3),
+                                5 - CGFloat(i - 5), 3.5 - CGFloat(i - 5) * 0.6, rgb(0xD9D2C3, 0.85))
+            }
+        }
+    }
+    if (1...5).contains(i) {
+        inBody(ctx, p) {
+            // The arc of the throw.
+            ctx.stroke({ path in
+                path.addArc(center: CGPoint(x: 6, y: -50), radius: 34, startAngle: .pi * 0.1, endAngle: .pi * 0.9,
+                            clockwise: false)
+            }, rgb(0xFFFFFF, 0.8), 2.2)
+        }
+    }
+}
+
+/// The bear Putin rides, drawn under him in the same body space.
+private func drawBear(_ ctx: CGContext, frame i: Int) {
+    let brown = rgb(0x6B4A32), dark = rgb(0x4E3524), snout = rgb(0xC9A582)
+    let gallop = CGFloat(i) / 8 * 2 * .pi
+    // Galloping legs.
+    for (x, phase) in [(-15.0, CGFloat(0)), (15.0, CGFloat.pi)] {
+        let lift = sin(gallop + phase) * 3
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: CGFloat(x) - 5, y: -13 + lift, width: 10, height: 13),
+                                     cornerWidth: 4, cornerHeight: 4) }, dark, outlineWidth: 1.2)
+    }
+    // Body.
+    ctx.fillGradient({ $0.addEllipse(in: CGRect(x: -27, y: -32, width: 54, height: 30)) }, [brown, dark],
+                     from: -32, to: -2, outlineWidth: 1.4)
+    // Head, facing the way the character faces.
+    let head = CGPoint(x: 24, y: -38)
+    for side: CGFloat in [-1, 1] {
+        ctx.fill({ $0.addEllipse(in: CGRect(x: head.x + side * 7 - 4, y: head.y - 12, width: 8, height: 8)) },
+                 dark, outlineWidth: 1)
+    }
+    ctx.fill({ $0.addEllipse(in: CGRect(x: head.x - 10, y: head.y - 9, width: 21, height: 19)) }, brown, outlineWidth: 1.4)
+    ctx.fill({ $0.addEllipse(in: CGRect(x: head.x + 2, y: head.y, width: 10, height: 7)) }, snout, outlineWidth: 1)
+    ctx.fillEllipse(CGPoint(x: head.x + 7, y: head.y + 2), 1.3, 1.3, rgb(0x2A1A12))
+    ctx.fillEllipse(CGPoint(x: head.x + 1, y: head.y - 3), 1.4, 1.4, rgb(0x2A1A12))
+}
+
+private func putinBear(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    var p = Pose()
+    p.armFront = 0.9
+    p.armBack = 1.05
+    p.legFront = 0.45
+    p.legBack = 0.45
+    p.bob = [0, -2, -4, -2, 0, -2, -4, -2][i]
+    p.lean = -0.08
+    p.eyes = .happy
+    p.mouth = .grin
+    p.blush = 0.4
+    inBody(ctx, p) { drawBear(ctx, frame: i) }
+    drawCharacter(ctx, p, look)
+    inBody(ctx, p) {
+        for k in 0..<3 {
+            let y = -18 - CGFloat(k) * 13
+            let length = 12 + CGFloat((i + k) % 3) * 7
+            ctx.stroke({ path in
+                path.move(to: CGPoint(x: -30, y: y)); path.addLine(to: CGPoint(x: -30 - length, y: y))
+            }, rgb(0xFFFFFF, 0.85), 2)
+        }
+    }
+}
+
+// MARK: - Xi: the parade and the Skynet robot
+
+/// The convoy drives past in the window (Effect.tank / .truck); here he reviews it, waving.
+private func xiParade(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    var p = Pose()
+    p.armFront = i == 0 ? 0.3 : (i % 2 == 0 ? 2.7 : 3.05)
+    p.armBack = 0.1
+    p.eyes = .half
+    p.mouth = i == 0 ? .flat : .smile
+    p.blush = 0.3
+    p.tilt = i == 0 ? 0 : (i % 2 == 0 ? 0.03 : 0.05)
+    drawCharacter(ctx, p, look)
+}
+
+/// A Skynet-style endoskeleton: chrome skull, glowing red eyes, ribbed neck and piston limbs.
+/// `built` (0...1) is how much of it has been printed so far, from the feet up; `glow` lights the eyes.
+private func drawTerminator(_ ctx: CGContext, at p: CGPoint, built: CGFloat, glow: CGFloat) {
+    guard built > 0 else { return }
+    let chrome = rgb(0xC9CFD8), steel = rgb(0x8A929E), dark = rgb(0x3A3F48), red = rgb(0xFF2E2E)
+    let height: CGFloat = 70
+    ctx.saveGState()
+    ctx.translateBy(x: p.x, y: p.y)
+    ctx.saveGState()
+    ctx.clip(to: CGRect(x: -40, y: -height * built - 1, width: 80, height: height * built + 6))
+
+    // Legs: thigh and shin struts with a knee joint, flat steel feet.
+    for x: CGFloat in [-6, 6] {
+        let knee = CGPoint(x: x * 1.1, y: -12)
+        for (from, to) in [(CGPoint(x: x * 0.8, y: -25), knee), (knee, CGPoint(x: x, y: -2))] {
+            ctx.stroke({ $0.move(to: from); $0.addLine(to: to) }, outline, 5.6)
+            ctx.stroke({ $0.move(to: from); $0.addLine(to: to) }, chrome, 3.4)
+        }
+        ctx.fill({ $0.addEllipse(in: CGRect(x: knee.x - 2.6, y: knee.y - 2.6, width: 5.2, height: 5.2)) }, steel, outlineWidth: 1)
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: x - 4, y: -3, width: 9, height: 4), cornerWidth: 1.5, cornerHeight: 1.5) },
+                 dark, outlineWidth: 1.1)
+    }
+    // Pelvis.
+    ctx.fill({ $0.addRoundedRect(in: CGRect(x: -9, y: -29, width: 18, height: 6), cornerWidth: 2, cornerHeight: 2) }, steel, outlineWidth: 1.2)
+    // Spine and ribcage.
+    ctx.fill({ $0.addRect(CGRect(x: -2, y: -34, width: 4, height: 6)) }, dark, outlineWidth: 1)
+    ctx.fillGradient({ p in
+        p.move(to: CGPoint(x: -12, y: -50)); p.addLine(to: CGPoint(x: 12, y: -50))
+        p.addQuadCurve(to: CGPoint(x: 7, y: -34), control: CGPoint(x: 13, y: -38))
+        p.addLine(to: CGPoint(x: -7, y: -34))
+        p.addQuadCurve(to: CGPoint(x: -12, y: -50), control: CGPoint(x: -13, y: -38))
+    }, [chrome, steel], from: -50, to: -34, outlineWidth: 1.3)
+    for y: CGFloat in [-46, -42, -38] {
+        ctx.stroke({ $0.move(to: CGPoint(x: -9, y: y)); $0.addLine(to: CGPoint(x: 9, y: y)) }, dark, 1.1)
+    }
+    ctx.stroke({ $0.move(to: CGPoint(x: 0, y: -49)); $0.addLine(to: CGPoint(x: 0, y: -35)) }, dark, 1.6)
+    // Glowing power core.
+    ctx.fillEllipse(CGPoint(x: 0, y: -44), 3 + glow * 2, 3 + glow * 2, rgb(0xFF2E2E, 0.25 + 0.3 * glow))
+    ctx.fill({ $0.addEllipse(in: CGRect(x: -2, y: -46, width: 4, height: 4)) }, red, outlineWidth: 0.9)
+    // Piston arms hanging forward, claw hands.
+    for side: CGFloat in [-1, 1] {
+        let shoulder = CGPoint(x: side * 13, y: -48), elbow = CGPoint(x: side * 15, y: -37), hand = CGPoint(x: side * 14 + 3, y: -27)
+        for (from, to) in [(shoulder, elbow), (elbow, hand)] {
+            ctx.stroke({ $0.move(to: from); $0.addLine(to: to) }, outline, 4.6)
+            ctx.stroke({ $0.move(to: from); $0.addLine(to: to) }, chrome, 2.6)
+        }
+        ctx.fill({ $0.addEllipse(in: CGRect(x: shoulder.x - 3.5, y: shoulder.y - 3.5, width: 7, height: 7)) }, steel, outlineWidth: 1.1)
+        ctx.fill({ $0.addEllipse(in: CGRect(x: elbow.x - 2.2, y: elbow.y - 2.2, width: 4.4, height: 4.4)) }, steel, outlineWidth: 0.9)
+        for dx: CGFloat in [-2, 0.5, 3] {
+            ctx.stroke({ $0.move(to: hand); $0.addLine(to: CGPoint(x: hand.x + dx, y: hand.y + 4)) }, dark, 1.3)
+        }
+    }
+    // Ribbed neck.
+    ctx.fill({ $0.addRect(CGRect(x: -3.5, y: -55, width: 7, height: 6)) }, steel, outlineWidth: 1)
+    for y: CGFloat in [-53, -51] {
+        ctx.stroke({ $0.move(to: CGPoint(x: -3.5, y: y)); $0.addLine(to: CGPoint(x: 3.5, y: y)) }, dark, 0.8)
+    }
+    // Skull: cranium, cheekbones, jaw of steel teeth.
+    ctx.fillGradient({ p in
+        p.move(to: CGPoint(x: -6, y: -54))
+        p.addLine(to: CGPoint(x: -9, y: -60))
+        p.addCurve(to: CGPoint(x: 0, y: -71), control1: CGPoint(x: -13, y: -66), control2: CGPoint(x: -8, y: -71))
+        p.addCurve(to: CGPoint(x: 9, y: -60), control1: CGPoint(x: 8, y: -71), control2: CGPoint(x: 13, y: -66))
+        p.addLine(to: CGPoint(x: 6, y: -54))
+        p.closeSubpath()
+    }, [rgb(0xEEF1F5), chrome, steel], from: -71, to: -54, outlineWidth: 1.4)
+    ctx.fill({ $0.addRoundedRect(in: CGRect(x: -5, y: -57.5, width: 10, height: 3.5), cornerWidth: 1, cornerHeight: 1) }, dark, outlineWidth: 0.8)
+    for x: CGFloat in [-3, -1, 1, 3] {
+        ctx.stroke({ $0.move(to: CGPoint(x: x, y: -57.5)); $0.addLine(to: CGPoint(x: x, y: -54)) }, chrome, 0.7)
+    }
+    // Eye sockets, then red eyes, shifted toward where it looks.
+    for x: CGFloat in [-3.5, 4] {
+        ctx.fillEllipse(CGPoint(x: x, y: -62.5), 3.2, 2.6, dark)
+        if glow > 0 {
+            ctx.fillEllipse(CGPoint(x: x, y: -62.5), 2 + glow * 3.5, 2 + glow * 3.5, rgb(0xFF3A2E, 0.35 * glow))
+        }
+        ctx.fillEllipse(CGPoint(x: x + 0.5, y: -62.5), 1.5 + glow * 0.4, 1.5 + glow * 0.4, glow > 0 ? red : rgb(0x6A1A1A))
+        if glow > 0 { ctx.fillEllipse(CGPoint(x: x + 0.1, y: -63), 0.5, 0.5, white) }
+    }
+    ctx.stroke({ $0.addArc(center: CGPoint(x: -1, y: -64), radius: 6, startAngle: .pi * 1.15, endAngle: .pi * 1.45, clockwise: false) },
+               white, 1.4)
+    ctx.restoreGState()
+
+    // The red printing line sweeping up while it is being built.
+    if built < 1 {
+        let y = -height * built
+        ctx.stroke({ $0.move(to: CGPoint(x: -18, y: y)); $0.addLine(to: CGPoint(x: 18, y: y)) }, rgb(0xFF2E2E, 0.35), 4)
+        ctx.stroke({ $0.move(to: CGPoint(x: -18, y: y)); $0.addLine(to: CGPoint(x: 18, y: y)) }, rgb(0xFF6A5A), 1.4)
+    }
+    ctx.restoreGState()
+}
+
+private func xiRobot(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    var p = Pose()
+    // Raises a hand to switch it on, then points it at the target.
+    p.armFront = [0.6, 2.2, 2.4, 2.3, 1.5, 1.45, 1.5, 1.45][i]
+    p.armBack = 0.3
+    p.eyes = .half
+    p.mouth = i > 3 ? .smirk : .flat
+    p.blush = 0.3
+    p.lean = i > 3 ? 0.04 : 0
+    drawCharacter(ctx, p, look)
+    inBody(ctx, p) {
+        // A red holographic grid on the ground where it is printed.
+        if i < 4 {
+            for k in 0..<3 {
+                ctx.stroke({ path in
+                    path.addEllipse(in: CGRect(x: 39 - 20 + CGFloat(k) * 4, y: -3 + CGFloat(k), width: 40 - CGFloat(k) * 8, height: 7 - CGFloat(k) * 2))
+                }, rgb(0xFF3A2E, 0.75 - CGFloat(k) * 0.2), 1.2)
+            }
+        }
+        let built = [0.15, 0.4, 0.7, 1, 1, 1, 1, 1][i] as CGFloat
+        let glow = [0, 0, 0, 0.6, 1, 0.8, 1, 0.85][i] as CGFloat
+        drawTerminator(ctx, at: CGPoint(x: 39, y: 0), built: built, glow: glow)
+    }
+}
+
+// MARK: - Kim: applause and the missile
+
+/// The officials who must applaud along with him.
+private let cadre = Look(id: "cadre",
+                         hair: rgb(0x26262C), hairDark: rgb(0x131317), hairLight: rgb(0x55555F),
+                         iris: rgb(0x5A3A2A), irisDark: rgb(0x2E1A10), irisLight: rgb(0xA07A60),
+                         style: .putinShort, outfit: .suit, sleeve: rgb(0x5E6B3A), sleeveDark: rgb(0x434D28),
+                         shoe: rgb(0x1E1E24), sock: rgb(0x434D28), restingLid: 0.2)
+
+/// Draws `look` clapping: `open` 0 = hands together, 1 = apart.
+private func drawClapper(_ ctx: CGContext, _ look: Look, _ pose: Pose, open: CGFloat) {
+    var p = pose
+    p.armFront = 0.95 + open * 0.07
+    p.armBack = 0.95 - open * 0.05
+    drawCharacter(ctx, p, look)
+    inBody(ctx, p) {
+        for side: CGFloat in [-1, 1] {
+            let c = CGPoint(x: 13 + side * (2.5 + open * 4), y: -34)
+            drawHand(ctx, c, look)
+            if open == 0 {
+                ctx.stroke({ path in
+                    path.addArc(center: CGPoint(x: 13, y: -34), radius: 8, startAngle: .pi * (side < 0 ? 1.1 : 1.6),
+                                endAngle: .pi * (side < 0 ? 1.4 : 1.9), clockwise: false)
+                }, rgb(0xFFFFFF, 0.95), 1.6)
+            }
+        }
+    }
+}
+
+private func kimApplause(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    // A crowd of tiny officials, each clapping a little out of step, some in tears, some sweating.
+    let crowd: [(x: CGFloat, y: CGFloat, scale: CGFloat, front: Bool)] =
+        [(-50, -12, 0.38, false), (50, -12, 0.38, false), (-36, 2, 0.45, true), (37, 2, 0.45, true)]
+    func official(_ k: Int) {
+        let m = crowd[k]
+        var q = Pose()
+        q.eyes = k % 2 == 0 ? .teary : .happy
+        q.mouth = .open
+        q.sweat = k % 2 == 1
+        q.bob = (i + k) % 2 == 0 ? 0 : -3
+        ctx.saveGState()
+        ctx.translateBy(x: feet.x + m.x, y: feet.y + m.y)
+        ctx.scaleBy(x: m.scale, y: m.scale)
+        ctx.translateBy(x: -feet.x, y: -feet.y)
+        drawClapper(ctx, cadre, q, open: CGFloat((i + k) % 2))
+        ctx.restoreGState()
+    }
+    for k in crowd.indices where !crowd[k].front { official(k) }
+    var p = Pose()
+    p.eyes = .happy
+    p.mouth = .grin
+    p.blush = 0.8
+    p.bob = i % 2 == 0 ? 0 : -1.2
+    p.tilt = 0.04
+    drawClapper(ctx, look, p, open: CGFloat(i % 2))
+    for k in crowd.indices where crowd[k].front { official(k) }
+}
+
+private func drawLaunchBox(_ ctx: CGContext, at h: CGPoint) {
+    ctx.fill({ $0.addRoundedRect(in: CGRect(x: h.x - 6, y: h.y - 11, width: 12, height: 8), cornerWidth: 2, cornerHeight: 2) },
+             rgb(0x3A3F48), outlineWidth: 1.2)
+    ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 1.5, y: h.y - 14, width: 5, height: 5)) }, rgb(0xD63A3A), outlineWidth: 1)
+}
+
+private func drawRocket(_ ctx: CGContext, at p: CGPoint, flame: Bool) {
+    // Fins.
+    for side: CGFloat in [-1, 1] {
+        ctx.fill({ path in
+            path.move(to: CGPoint(x: p.x + side * 4, y: p.y - 2))
+            path.addLine(to: CGPoint(x: p.x + side * 9, y: p.y + 6))
+            path.addLine(to: CGPoint(x: p.x + side * 4, y: p.y + 7))
+            path.closeSubpath()
+        }, rgb(0xC23A3A), outlineWidth: 1)
+    }
+    // Exhaust.
+    if flame {
+        ctx.fill({ path in
+            path.move(to: CGPoint(x: p.x - 3.5, y: p.y + 7))
+            path.addQuadCurve(to: CGPoint(x: p.x, y: p.y + 17), control: CGPoint(x: p.x - 4, y: p.y + 14))
+            path.addQuadCurve(to: CGPoint(x: p.x + 3.5, y: p.y + 7), control: CGPoint(x: p.x + 4, y: p.y + 14))
+            path.closeSubpath()
+        }, rgb(0xFFB43A), outlineWidth: 1)
+    }
+    // Body and nose cone.
+    ctx.fill({ $0.addRoundedRect(in: CGRect(x: p.x - 5, y: p.y - 12, width: 10, height: 20), cornerWidth: 4, cornerHeight: 4) },
+             rgb(0xEDEDF2), outlineWidth: 1.3)
+    ctx.fill({ path in
+        path.move(to: CGPoint(x: p.x - 5, y: p.y - 11))
+        path.addQuadCurve(to: CGPoint(x: p.x, y: p.y - 22), control: CGPoint(x: p.x - 4, y: p.y - 18))
+        path.addQuadCurve(to: CGPoint(x: p.x + 5, y: p.y - 11), control: CGPoint(x: p.x + 4, y: p.y - 18))
+        path.closeSubpath()
+    }, rgb(0xC23A3A), outlineWidth: 1.2)
+    ctx.fillEllipse(CGPoint(x: p.x, y: p.y - 6), 2, 2, rgb(0x5B8DEF))
+}
+
+/// The missile on its launcher rail, `rise` points up from the pad; drawn twice the size of a carry-on rocket.
+private func drawMissile(_ ctx: CGContext, rise: CGFloat, flame: Bool) {
+    ctx.saveGState()
+    ctx.translateBy(x: 44, y: -16 - rise)
+    ctx.scaleBy(x: 1.8, y: 1.8)
+    if flame {
+        // A long exhaust plume pointing down.
+        ctx.saveGState()
+        ctx.translateBy(x: 0, y: 5); ctx.scaleBy(x: 1, y: -1)
+        drawFlame(ctx, at: .zero, size: 18, colors: [rgb(0xFFF3A8), rgb(0xFFB43A), rgb(0xFF5A1E, 0.8)])
+        ctx.restoreGState()
+    }
+    drawRocket(ctx, at: .zero, flame: flame)
+    ctx.restoreGState()
+}
+
+private func kimMissile(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    let rise: CGFloat = [0, 0, 2, 22, 52, 92, 140, 140][i]
+    var p = Pose()
+    p.armFront = [1.25, 1.35, 0.9, 0.7, 2.6, 2.8, 2.7, 2.8][i]
+    p.armBack = [0.2, 0.2, 0.4, 0.6, 2.4, 2.6, 2.5, 2.6][i]
+    p.eyes = i < 2 ? .angry : (i < 4 ? .wide : .happy)
+    p.mouth = i < 2 ? .grin : .open
+    p.brows = i < 2 ? .angry : .raised
+    p.bob = [0, 0, 0, -1, -3, -1, -3, -1][i]
+    p.tilt = i >= 2 ? -0.06 : 0
+    inBody(ctx, p) {
+        // Launcher: a squat olive trailer with a red-and-white rail.
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: 30, y: -12, width: 30, height: 9), cornerWidth: 2, cornerHeight: 2) },
+                 rgb(0x5E6B3A), outlineWidth: 1.3)
+        for x: CGFloat in [35, 55] {
+            ctx.fill({ $0.addEllipse(in: CGRect(x: x - 3.5, y: -6, width: 7, height: 7)) }, rgb(0x2E2E2E), outlineWidth: 1.1)
+        }
+        ctx.fill({ $0.addRect(CGRect(x: 51, y: -52, width: 3, height: 41)) }, rgb(0x8A929E), outlineWidth: 1)
+        if rise < 120 { drawMissile(ctx, rise: rise, flame: i >= 2 && i <= 6) }
+        // Smoke billowing off the pad.
+        if i >= 2 {
+            let puff = min(CGFloat(i - 1), 4)
+            for (dx, dy, r) in [(-14.0, -4.0, 6.0), (0.0, -2.0, 8.0), (14.0, -5.0, 6.0), (-7.0, -12.0, 5.0), (8.0, -13.0, 5.0)] {
+                ctx.fill({ $0.addEllipse(in: CGRect(x: 44 + CGFloat(dx) * (0.6 + puff * 0.15) - CGFloat(r) - puff,
+                                                    y: CGFloat(dy) - CGFloat(r) - puff * 0.8,
+                                                    width: (CGFloat(r) + puff) * 2, height: (CGFloat(r) + puff) * 1.6)) },
+                         rgb(0xE9EAEF, i == 7 ? 0.6 : 0.95), outlineWidth: i == 7 ? 0 : 1)
+            }
+        }
+        // Smoke trail left by the missile.
+        if (3...6).contains(i) {
+            ctx.stroke({ $0.move(to: CGPoint(x: 44, y: -18)); $0.addLine(to: CGPoint(x: 44, y: -16 - rise + 10)) },
+                       rgb(0xE9EAEF, 0.8), 7)
+        }
+    }
+    drawCharacter(ctx, p, look)
+    inBody(ctx, p) {
+        if i < 2 { drawLaunchBox(ctx, at: hand(p.armFront, front: true)) }
+        if i == 1 { ctx.fillEllipse(CGPoint(x: hand(p.armFront, front: true).x + 0.5, y: hand(p.armFront, front: true).y - 11.5), 5, 5, rgb(0xFF5A3A, 0.5)) }
     }
 }

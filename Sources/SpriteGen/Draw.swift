@@ -123,6 +123,10 @@ let eyeOffsets: [CGPoint] = [CGPoint(x: -8, y: 3), CGPoint(x: 12, y: 3)]
 func drawFace(_ ctx: CGContext, head c: CGPoint, pose: Pose, look: Look) {
     for o in eyeOffsets {
         let e = CGPoint(x: c.x + o.x, y: c.y + o.y)
+        // Smaller, less anime eyes for the real-life caricatures.
+        ctx.saveGState()
+        ctx.translateBy(x: e.x, y: e.y); ctx.scaleBy(x: look.eyeScale, y: look.eyeScale); ctx.translateBy(x: -e.x, y: -e.y)
+        defer { ctx.restoreGState() }
         switch pose.eyes {
         case .open(let lookX):
             drawOpenEye(ctx, e, look: lookX, lid: look.restingLid, look)
@@ -155,9 +159,15 @@ func drawFace(_ ctx: CGContext, head c: CGPoint, pose: Pose, look: Look) {
     // Brows.
     for (i, o) in eyeOffsets.enumerated() {
         let inner: CGFloat = i == 0 ? 1 : -1   // direction toward the nose
-        let x = c.x + o.x, y = c.y + o.y - 11
+        let x = c.x + o.x, y = c.y + o.y - 3 - 8 * look.eyeScale
         switch pose.brows {
-        case .none: break
+        case .none:
+            if look.face.contains(.thickBrows) {
+                ctx.stroke({ p in
+                    p.move(to: CGPoint(x: x - inner * 5, y: y + 1))
+                    p.addQuadCurve(to: CGPoint(x: x + inner * 4.5, y: y + 0.5), control: CGPoint(x: x, y: y - 1.5))
+                }, look.hairDark, 2.8)
+            }
         case .angry:
             ctx.stroke({ p in
                 p.move(to: CGPoint(x: x - inner * 5, y: y - 2)); p.addLine(to: CGPoint(x: x + inner * 4, y: y + 3))
@@ -177,7 +187,7 @@ func drawFace(_ ctx: CGContext, head c: CGPoint, pose: Pose, look: Look) {
     // Blush.
     let blush = max(pose.blush, look.extraBlush)
     if blush > 0 {
-        let color = rgb(0xFF8FA3, 0.3 + 0.4 * blush)
+        let color = rgb(0xFF8FA3, (0.3 + 0.4 * blush) * look.blushScale)
         let y = c.y + eyeOffsets[0].y + 9
         ctx.fillEllipse(CGPoint(x: c.x + eyeOffsets[0].x - 3, y: y), 5, 2.6, color)
         ctx.fillEllipse(CGPoint(x: c.x + eyeOffsets[1].x + 3, y: y), 5, 2.6, color)
@@ -194,8 +204,48 @@ func drawFace(_ ctx: CGContext, head c: CGPoint, pose: Pose, look: Look) {
         ctx.fillEllipse(CGPoint(x: c.x + 23, y: c.y + 14), 3.5, 2.2, rgb(0xFF8FA3, 0.6))
     }
 
+    drawFaceDetails(ctx, head: c, look: look)
     if look.muzzle { return }   // Nezuko's bamboo covers the mouth.
     drawMouth(ctx, CGPoint(x: c.x + 3, y: c.y + 15), pose.mouth)
+}
+
+/// Likeness details for the real-life caricatures: a nose, eye bags, cheekbones, a fuller jaw.
+func drawFaceDetails(_ ctx: CGContext, head c: CGPoint, look: Look) {
+    let line = rgb(0x4A2D3A, 0.45)
+    if look.face.contains(.nose) {
+        ctx.stroke({ p in
+            p.move(to: CGPoint(x: c.x + 3.5, y: c.y + 6))
+            p.addQuadCurve(to: CGPoint(x: c.x + 2, y: c.y + 11), control: CGPoint(x: c.x + 6, y: c.y + 10))
+        }, line, 1.3)
+    }
+    if look.face.contains(.eyeBags) {
+        for o in eyeOffsets {
+            let e = CGPoint(x: c.x + o.x, y: c.y + o.y + 8 * look.eyeScale)
+            ctx.stroke({ p in
+                p.move(to: CGPoint(x: e.x - 3.5, y: e.y)); p.addQuadCurve(to: CGPoint(x: e.x + 3.5, y: e.y), control: CGPoint(x: e.x, y: e.y + 2.2))
+            }, line, 0.9)
+        }
+    }
+    if look.face.contains(.cheekbones) {
+        for (o, side) in zip(eyeOffsets, [CGFloat(-1), 1]) {
+            let x = c.x + o.x + side * 7
+            ctx.stroke({ p in
+                p.move(to: CGPoint(x: x, y: c.y + 8)); p.addQuadCurve(to: CGPoint(x: x - side * 2, y: c.y + 15), control: CGPoint(x: x + side, y: c.y + 12))
+            }, line, 0.9)
+        }
+    }
+    if look.face.contains(.jowls) {
+        // Smile lines and a soft double chin.
+        for side: CGFloat in [-1, 1] {
+            let x = c.x + 3 + side * 7
+            ctx.stroke({ p in
+                p.move(to: CGPoint(x: x, y: c.y + 9)); p.addQuadCurve(to: CGPoint(x: x + side * 1.5, y: c.y + 17), control: CGPoint(x: x + side * 2.5, y: c.y + 12))
+            }, line, 0.9)
+        }
+        ctx.stroke({ p in
+            p.move(to: CGPoint(x: c.x - 3, y: c.y + 21.5)); p.addQuadCurve(to: CGPoint(x: c.x + 9, y: c.y + 21.5), control: CGPoint(x: c.x + 3, y: c.y + 23.5))
+        }, line, 1)
+    }
 }
 
 func drawMouth(_ ctx: CGContext, _ m: CGPoint, _ mouth: Mouth) {
@@ -275,7 +325,8 @@ func drawOpenEye(_ ctx: CGContext, _ e: CGPoint, look lookX: CGFloat, lid: CGFlo
 
 let effectNames = ["heart", "note", "anger", "zzz", "dots", "sweat", "exclaim", "sparkle", "code", "check",
                    // Not emotes: props and particles for the special moves.
-                   "chest", "flower1", "flower2", "flower3", "flame", "glow", "puff"]
+                   "chest", "flower1", "flower2", "flower3", "flame", "glow", "puff",
+                   "wall", "coin", "boom", "tank", "truck"]
 
 func drawEffect(_ ctx: CGContext, _ index: Int) {
     let c = CGPoint(x: 64, y: 64)
@@ -363,6 +414,83 @@ func drawEffect(_ ctx: CGContext, _ index: Int) {
         }
         for (dx, dy, r) in [(-22.0, 6.0, 22.0), (20.0, 8.0, 20.0), (0.0, -12.0, 28.0), (-4.0, 14.0, 20.0)] {
             ctx.fillEllipse(CGPoint(x: c.x + CGFloat(dx), y: c.y + CGFloat(dy)), CGFloat(r), CGFloat(r), white)
+        }
+    case 17: // Trump's wall, filling the whole frame so the app can stretch it
+        let mortar = rgb(0x8E6A55), brick = rgb(0xC2724E), brickLight = rgb(0xD98D66)
+        ctx.setFillColor(mortar); ctx.fill(CGRect(x: 0, y: 14, width: 128, height: 114))
+        let h: CGFloat = 13
+        for row in 0..<9 {
+            let y = 16 + CGFloat(row) * h
+            let shift: CGFloat = row % 2 == 0 ? 0 : -13
+            for col in 0..<6 {
+                let r = CGRect(x: shift + CGFloat(col) * 26 + 1, y: y, width: 24, height: h - 2)
+                ctx.setFillColor(row % 3 == col % 3 ? brickLight : brick); ctx.fill(r)
+                ctx.setFillColor(rgb(0xFFFFFF, 0.18)); ctx.fill(CGRect(x: r.minX, y: r.minY, width: r.width, height: 2))
+            }
+        }
+        // Concrete coping along the top.
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: 1, y: 2, width: 126, height: 15), cornerWidth: 3, cornerHeight: 3) },
+                 rgb(0xC9C3BA), outlineWidth: 2)
+        ctx.setStrokeColor(outline); ctx.setLineWidth(3); ctx.stroke(CGRect(x: 1.5, y: 14, width: 125, height: 112.5))
+        // A gold plaque, of course.
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: 30, y: 50, width: 68, height: 24), cornerWidth: 4, cornerHeight: 4) },
+                 rgb(0xF2C14E), outlineWidth: 2.4)
+        drawText(ctx, "TRUMP", size: 13.5, at: CGPoint(x: 39, y: 67), color: rgb(0x7A5418))
+    case 18: // gold coin
+        ctx.fill({ $0.addEllipse(in: CGRect(x: 22, y: 22, width: 84, height: 84)) }, rgb(0xF2C14E), outlineWidth: 5)
+        ctx.stroke({ $0.addEllipse(in: CGRect(x: 34, y: 34, width: 60, height: 60)) }, rgb(0xC9922E), 4)
+        drawText(ctx, "$", size: 54, at: CGPoint(x: 49, y: 84), color: rgb(0x8A5A18))
+    case 19: // comic "BOOM!" burst
+        let star = CGMutablePath()
+        for k in 0..<24 {
+            let a = CGFloat(k) / 24 * 2 * .pi
+            let r: CGFloat = k % 2 == 0 ? 62 : 40
+            let p = CGPoint(x: c.x + cos(a) * r, y: c.y + sin(a) * r * 0.8)
+            k == 0 ? star.move(to: p) : star.addLine(to: p)
+        }
+        star.closeSubpath()
+        ctx.fill({ $0.addPath(star) }, rgb(0xFF5A3A), outlineWidth: 3.5)
+        ctx.fill({ $0.addPath(star.copy(using: [CGAffineTransform(translationX: c.x, y: c.y).scaledBy(x: 0.72, y: 0.72)
+            .translatedBy(x: -c.x, y: -c.y)])!) }, rgb(0xFFD84D), outlineWidth: 0)
+        drawText(ctx, "BOOM!", size: 21, at: CGPoint(x: 26, y: 72), color: rgb(0xC2182E))
+    case 20, 21: // parade vehicles, driving toward +x, wheels on the bottom edge
+        let olive = rgb(0x5E6B3A), oliveDark = rgb(0x434D28), oliveLight = rgb(0x7D8C50)
+        // Tracks or wheels.
+        if index == 20 {
+            ctx.fill({ $0.addRoundedRect(in: CGRect(x: 8, y: 96, width: 112, height: 26), cornerWidth: 13, cornerHeight: 13) },
+                     rgb(0x3A3A3A), outlineWidth: 3)
+            for k in 0..<6 { ctx.fill({ $0.addEllipse(in: CGRect(x: 14 + CGFloat(k) * 17.5, y: 100, width: 17, height: 17)) },
+                                      rgb(0x8A8A8A), outlineWidth: 2) }
+            // Hull, turret and the long gun.
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: 4, y: 98)); p.addLine(to: CGPoint(x: 14, y: 76)); p.addLine(to: CGPoint(x: 112, y: 76))
+                p.addLine(to: CGPoint(x: 124, y: 98)); p.closeSubpath()
+            }, olive, outlineWidth: 3)
+            ctx.fill({ $0.addRoundedRect(in: CGRect(x: 80, y: 61, width: 47, height: 7), cornerWidth: 3, cornerHeight: 3) },
+                     oliveDark, outlineWidth: 2.5)
+            ctx.fill({ $0.addRoundedRect(in: CGRect(x: 36, y: 50, width: 52, height: 28), cornerWidth: 12, cornerHeight: 12) },
+                     oliveLight, outlineWidth: 3)
+            ctx.fill({ $0.addRoundedRect(in: CGRect(x: 50, y: 42, width: 18, height: 10), cornerWidth: 4, cornerHeight: 4) },
+                     oliveDark, outlineWidth: 2.5)
+        } else {
+            for x: CGFloat in [28, 66, 100] {
+                ctx.fill({ $0.addEllipse(in: CGRect(x: x - 13, y: 96, width: 26, height: 26)) }, rgb(0x2E2E2E), outlineWidth: 3)
+                ctx.fillEllipse(CGPoint(x: x, y: 109), 5, 5, rgb(0x9A9A9A))
+            }
+            // Armored body with a sloped nose and a flag mast.
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: 6, y: 104)); p.addLine(to: CGPoint(x: 6, y: 58)); p.addLine(to: CGPoint(x: 84, y: 58))
+                p.addLine(to: CGPoint(x: 122, y: 84)); p.addLine(to: CGPoint(x: 122, y: 104)); p.closeSubpath()
+            }, olive, outlineWidth: 3)
+            ctx.fill({ $0.addRoundedRect(in: CGRect(x: 86, y: 64, width: 18, height: 10), cornerWidth: 2, cornerHeight: 2) },
+                     rgb(0x9FC3D6), outlineWidth: 2)
+            ctx.stroke({ $0.move(to: CGPoint(x: 10, y: 84)); $0.addLine(to: CGPoint(x: 80, y: 84)) }, oliveDark, 3)
+            ctx.stroke({ $0.move(to: CGPoint(x: 24, y: 58)); $0.addLine(to: CGPoint(x: 24, y: 14)) }, outline, 3.5)
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: 24, y: 14)); p.addQuadCurve(to: CGPoint(x: 56, y: 22), control: CGPoint(x: 40, y: 10))
+                p.addLine(to: CGPoint(x: 56, y: 38)); p.addQuadCurve(to: CGPoint(x: 24, y: 34), control: CGPoint(x: 40, y: 30))
+                p.closeSubpath()
+            }, rgb(0xE8423A), outlineWidth: 2.5)
         }
     default: break
     }

@@ -8,7 +8,8 @@ final class Pet {
         /// Drops straight down to this height (a pet let go above the room's floor).
         case fall(CGFloat)
         case play(Anim, TimeInterval, effect: Effect? = nil, say: Line? = nil)
-        /// Plays an animation once from its start and stays on its last frame (Bocchi's puddle).
+        /// Plays an animation once from its start and stays on its last frame (Bocchi's puddle);
+        /// if it is already playing, it carries on from where it is instead of restarting.
         case hold(Anim, TimeInterval)
         case face(CGFloat)
         case run(() -> Void)
@@ -20,6 +21,8 @@ final class Pet {
         case invite(Pet), greet(Pet), woken(Pet), hit(Pet), pranked(Pet), chased(Pet), comfort(Pet)
         /// Special moves: Anya reading this pet's mind, Bocchi's guitar solo.
         case mindRead(Pet), listen(Pet)
+        /// Special moves: Putin's judo throw, Kim's applause.
+        case tossed(Pet), applaud(Pet)
     }
 
     /// How high above the feet a carried icon is held.
@@ -230,8 +233,7 @@ final class Pet {
         case .line(let line, let partner):
             say(line, to: partner)
         case .hold(let a, _):
-            anim = a
-            animStart = now
+            setAnim(a)
             holding = true
         case .walk, .fall:
             break
@@ -644,6 +646,19 @@ final class Pet {
                               .play(.happy, 3.5, effect: .note),
                               .line(.cheer, to: musician.character),
                               .play(.happy, 1.4, effect: .heart)]))
+        case .tossed(let thrower):
+            // Putin's judo: tumble in place, then get up cross.
+            interrupt([.play(.surprised, 0.5, effect: .exclaim),
+                       .face(direction(to: thrower)),
+                       .line(.hit, to: thrower.character),
+                       .run { [weak self] in self?.view.impact(dx: 0); self?.view.shake() },
+                       .play(.dragged, 0.6),
+                       .play(character.grumpyAnim, 1.6, effect: .anger),
+                       askForComfort()])
+        case .applaud(let leader):
+            interrupt([.face(direction(to: leader)),
+                       .line(.cheer, to: leader.character),
+                       .play(.happy, 1.8, effect: .note)])
         }
     }
 
@@ -751,6 +766,119 @@ final class Pet {
                            .play(.skill2, 4, say: .oni),
                            .line(.oniCalm, to: nil),
                            .play(.happy, 1.4)])
+        case .wall:
+            // The wall rises in front of him and shoves the icons beyond it away.
+            return engage([.run { [weak self] in
+                               guard let self else { return }
+                               self.view.wall(for: 3.6, facing: self.facing)
+                               let origin = CGPoint(x: self.position.x + self.facing * 70, y: self.position.y + 40)
+                               self.blast(from: origin, radius: 260) { ($0.x - origin.x) * self.facing > -20 }
+                           },
+                           .play(.skill1, 1, say: .wall),
+                           .hold(.skill1, 1.2),
+                           .play(.happy, 1.4, effect: .sparkle, say: .wallBuilt)])
+        case .tariff:
+            // Holds up the tariff board; coins pour off it at a friend, or at the icons ahead.
+            let friend = nearbyFriends(within: 700).randomElement()
+            friend?.receive(.invite(self))
+            let approach: [Step] = friend.map { [.walk(beside($0)), .face(direction(to: $0))] } ?? []
+            return engage(approach + [.line(.tariff, to: friend?.character),
+                                      .play(.skill2, 1),
+                                      .run { [weak self, weak friend] in
+                                          guard let self else { return }
+                                          self.view.coins(facing: self.facing)
+                                          if let friend {
+                                              DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                                                  if let self { friend.receive(.hit(self)) }
+                                              }
+                                          } else {
+                                              let origin = CGPoint(x: self.position.x + self.facing * 50, y: self.position.y + 60)
+                                              self.blast(from: origin, radius: 260) { ($0.x - origin.x) * self.facing > 0 }
+                                          }
+                                      },
+                                      .hold(.skill2, 1.3),
+                                      .play(.happy, 1.4, effect: .note)])
+        case .judo:
+            guard let friend = nearbyFriends(within: 500).randomElement() else {
+                return engage([.play(.skill1, 2, say: .judo), .play(.happy, 1, effect: .sparkle)])
+            }
+            friend.receive(.invite(self))
+            return engage([.walk(beside(friend)),
+                           .face(direction(to: friend)),
+                           .play(.skill1, 1.8, say: .judo),
+                           .run { [weak self, weak friend] in
+                               guard let self, let friend else { return }
+                               friend.receive(.tossed(self))
+                           },
+                           .play(.happy, 1.2)])
+        case .bearRide:
+            return engage([.run { [weak self] in
+                               guard let self else { return }
+                               self.view.dust(for: 3, facing: self.facing)
+                               self.view.shake()
+                           },
+                           .play(.skill2, 1, say: .bear),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               let origin = CGPoint(x: self.position.x, y: self.position.y + 30)
+                               self.blast(from: origin, radius: 190) { _ in true }
+                           },
+                           .play(.skill2, 2),
+                           .play(.happy, 1.2, effect: .sparkle)])
+        case .parade:
+            // A convoy rolls past while he waves, and the nearby icons fall in line.
+            return engage([.run { [weak self] in
+                               guard let self else { return }
+                               self.view.convoy(for: 4.2, facing: self.facing)
+                           },
+                           .play(.skill1, 1, say: .parade),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               // Up to five nearby icons line up in a neat row in front of him.
+                               let icons = self.world.availableIcons()
+                                   .filter { hypot($0.center.x - self.position.x, $0.center.y - self.position.y) < 320 }
+                                   .prefix(5)
+                               guard !icons.isEmpty else { return }
+                               let frame = self.screenFrame(containing: self.position)
+                               let y = min(max(self.position.y + 60, frame.minY + 60), frame.maxY - 60)
+                               var paths: [String: [CGPoint]] = [:]
+                               for (i, icon) in icons.enumerated() {
+                                   let x = self.position.x + self.facing * CGFloat(i + 1) * 64
+                                   paths[icon.name] = [CGPoint(x: min(max(x, frame.minX + 40), frame.maxX - 40), y: y)]
+                               }
+                               self.world.desktop.moveAll(paths)
+                           },
+                           .play(.skill1, 2.6, say: .paradeOrder),
+                           .play(.happy, 1.2, effect: .sparkle)])
+        case .aiRobot:
+            // The robot is printed and its eyes light up, then it sweeps the icons ahead with a laser.
+            return engage([.play(.skill2, 1, say: .aiRobot),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.laser(for: 1.6, facing: self.facing)
+                               let eye = CGPoint(x: self.position.x + self.facing * 43, y: self.position.y + 62)
+                               self.blast(from: eye, radius: 420) { ($0.x - eye.x) * self.facing > 0 && abs($0.y - eye.y) < 90 }
+                           },
+                           .hold(.skill2, 1.6),
+                           .line(.aiRobotDone, to: nil),
+                           .play(.happy, 1.2, effect: .sparkle)])
+        case .applause:
+            for friend in nearbyFriends(within: 700) { friend.receive(.applaud(self)) }
+            return engage([.run { [weak self] in self?.view.confetti(for: 2.4) },
+                           .play(.skill1, 2.4, say: .applause),
+                           .play(.happy, 1.4, effect: .note)])
+        case .missile:
+            // Launch (one cycle of skill2), then the missile comes down as fireworks.
+            return engage([.play(.skill2, 1, say: .missile),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.fireworks(facing: self.facing)
+                               let origin = CGPoint(x: self.position.x + self.facing * 44, y: self.position.y + 128)
+                               self.blast(from: origin, radius: 260) { _ in true }
+                           },
+                           .line(.boom, to: nil),
+                           .hold(.skill2, 1.8),
+                           .play(.happy, 1.2, effect: .sparkle)])
         }
     }
 

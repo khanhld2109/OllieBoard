@@ -3,8 +3,12 @@ import AppKit
 // Each look is a chibi fan-art take on a popular anime character (or a mascot for
 // an AI coding agent), built from the same skeleton so all sheets share identical animation rows.
 
-enum HairStyle { case anya, nezuko, frieren, bocchi, rem, bob, spiky, buns, ponytail }
-enum Outfit { case eden, kimono, robe, track, maid, hoodie }
+enum HairStyle { case anya, nezuko, frieren, bocchi, rem, bob, spiky, buns, ponytail,
+                 trumpSwoop, putinShort, xiSlick, kimSide }
+enum Outfit { case eden, kimono, robe, track, maid, hoodie, suit, judogi }
+
+/// Likeness details drawn on the face of the real-life caricatures.
+enum FaceDetail { case nose, eyeBags, cheekbones, jowls, thickBrows }
 
 /// Extra props for the agent mascots, drawn on top of the hair-style accessories.
 enum Accessory { case starClip, sparkleClip, cubeClip, glasses, headphones, beanie }
@@ -15,8 +19,8 @@ struct Look {
     let hair: CGColor, hairDark: CGColor, hairLight: CGColor
     let iris: CGColor, irisDark: CGColor, irisLight: CGColor
     let style: HairStyle
-    let outfit: Outfit
-    let sleeve: CGColor, sleeveDark: CGColor
+    var outfit: Outfit
+    var sleeve: CGColor, sleeveDark: CGColor
     var shoe = rgb(0x3A2A2A)
     var sock = white
     var restingLid: CGFloat = 0     // how much the upper lid covers the eye at rest
@@ -24,6 +28,15 @@ struct Look {
     var muzzle = false
     var accent = rgb(0xE3B341)     // small details: hoodie strings, laptop logo, clips
     var extras: [Accessory] = []
+    /// Suit extras: a tie (Trump's long red one) and a lapel pin.
+    var tie: CGColor? = nil
+    var pin: CGColor? = nil
+    var shirt = white
+    /// Width factor for the face and body (Kim is a little rounder).
+    var build: CGFloat = 1
+    var eyeScale: CGFloat = 1
+    var blushScale: CGFloat = 1
+    var face: Set<FaceDetail> = []
 }
 
 let looks: [Look] = [
@@ -50,6 +63,33 @@ let looks: [Look] = [
          hair: rgb(0x8DBBF7), hairDark: rgb(0x5B8AD6), hairLight: rgb(0xCDE2FF),
          iris: rgb(0x4F86E8), irisDark: rgb(0x1F3F87), irisLight: rgb(0xB3CCFF),
          style: .rem, outfit: .maid, sleeve: rgb(0x2B2B35), sleeveDark: rgb(0x1C1C24)),
+
+    // Playful political caricatures: same skin, chibi proportions and suit skeleton,
+    // told apart by hair and the tie/pin they always wear.
+    Look(id: "trump",
+         skin: rgb(0xFFDCC0), skinShade: rgb(0xF0BC9C),
+         hair: rgb(0xF4D47C), hairDark: rgb(0xCFA94E), hairLight: rgb(0xFFF1BE),
+         iris: rgb(0x5B9BE0), irisDark: rgb(0x24508F), irisLight: rgb(0xBFDCFF),
+         style: .trumpSwoop, outfit: .suit, sleeve: rgb(0x262C40), sleeveDark: rgb(0x191D2C),
+         shoe: rgb(0x1E1E24), sock: rgb(0x191D2C), restingLid: 0.25, tie: rgb(0xD8343A)),
+    Look(id: "putin",
+         skin: rgb(0xFCE4D8), skinShade: rgb(0xEFC6B4),
+         hair: rgb(0xC9B79A), hairDark: rgb(0x9C8B72), hairLight: rgb(0xE6DCCB),
+         iris: rgb(0x7FA3BE), irisDark: rgb(0x34546B), irisLight: rgb(0xC8DDEB),
+         style: .putinShort, outfit: .suit, sleeve: rgb(0x2C2E35), sleeveDark: rgb(0x1E2025),
+         shoe: rgb(0x1E1E24), sock: rgb(0x1E2025), restingLid: 0.35, tie: rgb(0x7A2D6A), shirt: rgb(0xD6E2F2),
+         eyeScale: 0.8, blushScale: 0.5, face: [.nose, .eyeBags, .cheekbones]),
+    Look(id: "xi",
+         hair: rgb(0x2A2A30), hairDark: rgb(0x16161A), hairLight: rgb(0x5C5C68),
+         iris: rgb(0x6B4A3A), irisDark: rgb(0x3A2418), irisLight: rgb(0xB08A70),
+         style: .xiSlick, outfit: .suit, sleeve: rgb(0x252A36), sleeveDark: rgb(0x191C25),
+         shoe: rgb(0x1E1E24), sock: rgb(0x191C25), restingLid: 0.5, tie: rgb(0x4D74C2), pin: rgb(0xD63A3A), build: 1.13,
+         eyeScale: 0.75, blushScale: 0.6, face: [.nose, .jowls, .thickBrows]),
+    Look(id: "kim",
+         hair: rgb(0x222228), hairDark: rgb(0x111114), hairLight: rgb(0x55555F),
+         iris: rgb(0x5A3A2A), irisDark: rgb(0x2E1A10), irisLight: rgb(0xA07A60),
+         style: .kimSide, outfit: .suit, sleeve: rgb(0x1F1F24), sleeveDark: rgb(0x141418),
+         shoe: rgb(0x141418), sock: rgb(0x141418), restingLid: 0.5, tie: rgb(0xCFC7A4), build: 1.14),
 
     // AI coding agents.
     Look(id: "claude",
@@ -108,8 +148,9 @@ func drawCharacter(_ ctx: CGContext, _ pose: Pose, _ look: Look) {
     }
 
     func leg(_ x: CGFloat, _ angle: CGFloat, dark: Bool) {
-        limb(ctx, from: CGPoint(x: x, y: -20), angle: angle, length: 17, width: 6,
-             color: dark ? look.skinShade : look.skin) { foot in
+        // Suits and judo gis come with trousers; everyone else shows bare legs.
+        let color = [.suit, .judogi].contains(look.outfit) ? (dark ? look.sleeveDark : look.sleeve) : (dark ? look.skinShade : look.skin)
+        limb(ctx, from: CGPoint(x: x, y: -20), angle: angle, length: 17, width: 6, color: color) { foot in
             ctx.fillEllipse(CGPoint(x: foot.x, y: foot.y - 3), 3.6, 3, look.sock)
             ctx.saveGState()
             ctx.translateBy(x: foot.x, y: foot.y)
@@ -131,12 +172,15 @@ func drawCharacter(_ ctx: CGContext, _ pose: Pose, _ look: Look) {
 
     leg(-5, pose.sitting ? 1.45 : pose.legBack, dark: true)
     arm(-9, pose.armBack, dark: true)
+    ctx.saveGState()
+    ctx.scaleBy(x: look.build, y: 1)
     drawOutfit(ctx, look)
+    ctx.restoreGState()
     leg(5, pose.sitting ? 1.6 : pose.legFront, dark: false)
 
     withHead {
         drawHairCap(ctx, look, head)
-        ctx.fill({ $0.addEllipse(in: CGRect(x: head.x - 27, y: head.y - 25, width: 54, height: 50)) }, look.skin)
+        ctx.fill({ $0.addEllipse(in: CGRect(x: head.x - 27 * look.build, y: head.y - 25, width: 54 * look.build, height: 50)) }, look.skin)
         drawFace(ctx, head: head, pose: pose, look: look)
         if look.muzzle { drawMuzzle(ctx, head) }
         if look.extras.contains(.glasses) { drawGlasses(ctx, head) }
@@ -210,7 +254,7 @@ func drawLongHair(_ ctx: CGContext, _ look: Look, _ h: CGPoint, swing: CGFloat, 
                        control2: CGPoint(x: top.x - 4, y: top.y + 16))
             p.closeSubpath()
         }, look.hair)
-    case .anya, .rem, .bob, .spiky, .buns:
+    case .anya, .rem, .bob, .spiky, .buns, .trumpSwoop, .putinShort, .xiSlick, .kimSide:
         break
     }
 }
@@ -277,6 +321,20 @@ func drawHairCap(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
                              [look.hair, look.hairDark], from: h.y - 38, to: h.y - 18)
         }
         ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 31, y: h.y - 31, width: 62, height: 56)) }, look.hairDark)
+    case .trumpSwoop:
+        ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 31, y: h.y - 33, width: 62, height: 52)) }, look.hairDark)
+    case .putinShort, .xiSlick, .kimSide:
+        // Short cuts leave the ears showing.
+        let w = 27 * look.build
+        for side: CGFloat in [-1, 1] {
+            ctx.fill({ $0.addEllipse(in: CGRect(x: h.x + side * w - 5, y: h.y - 5, width: 10, height: 15)) }, look.skin, outlineWidth: 1.4)
+            ctx.fillEllipse(CGPoint(x: h.x + side * (w + 1), y: h.y + 2.5), 1.8, 3.5, look.skinShade)
+        }
+        // Volume behind the head: tall for Kim's flat-top and Xi's combed-back hair, none for Putin's thin crown.
+        if look.style != .putinShort {
+            let top: CGFloat = look.style == .kimSide ? 36 : 35
+            ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - w - 2, y: h.y - top, width: (w + 2) * 2, height: top + 14)) }, look.hairDark)
+        }
     }
 }
 
@@ -284,6 +342,8 @@ func drawHairCap(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
 func drawBangs(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
     let tips: [(CGFloat, CGFloat)]
     switch look.style {
+    case .trumpSwoop, .putinShort, .xiSlick, .kimSide:
+        return drawLeaderHair(ctx, look, h)
     case .anya:
         tips = [(25, -6), (18, -2), (13, -13), (5, -5), (-2, -14), (-9, -5), (-15, -12), (-22, -2), (-26, -6)]
     case .nezuko:
@@ -327,10 +387,119 @@ func drawBangs(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
     }, look.hairLight, 3)
 }
 
+/// Smooth, combed hair for the political leaders, in place of a spiky anime fringe.
+func drawLeaderHair(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
+    func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: h.x + x * look.build, y: h.y + y) }
+    let shape = CGMutablePath()
+    func fillHair(_ build: (CGMutablePath) -> Void, outline: CGFloat = 1.6) {
+        build(shape)
+        ctx.fill({ $0.addPath(shape) }, look.hair, outlineWidth: outline)
+    }
+    /// Comb lines, kept inside the hair.
+    func strand(_ points: [CGPoint], _ width: CGFloat = 1.2) {
+        ctx.saveGState()
+        ctx.addPath(shape); ctx.clip()
+        ctx.stroke({ p in
+            p.move(to: points[0]); p.addQuadCurve(to: points[2], control: points[1])
+        }, look.hairDark, width)
+        ctx.restoreGState()
+    }
+    switch look.style {
+    case .trumpSwoop:
+        // Swept over from the back into a big golden wave that overhangs the forehead.
+        fillHair { p in
+            p.move(to: pt(-31, 8))
+            p.addCurve(to: pt(-8, -38), control1: pt(-37, -18), control2: pt(-28, -37))
+            p.addCurve(to: pt(36, -22), control1: pt(10, -43), control2: pt(32, -37))
+            p.addQuadCurve(to: pt(27, -10), control: pt(39, -12))
+            p.addLine(to: pt(28, 0))
+            p.addLine(to: pt(23, -6))
+            p.addQuadCurve(to: pt(-2, -13), control: pt(12, -17))
+            p.addQuadCurve(to: pt(-23, 4), control: pt(-17, -12))
+            p.addLine(to: pt(-26, 12))
+            p.closeSubpath()
+        }
+        strand([pt(-24, -16), pt(0, -40), pt(30, -27)])
+        strand([pt(-27, -2), pt(-12, -30), pt(18, -30)])
+        strand([pt(4, -15), pt(20, -24), pt(32, -18)], 1)
+        ctx.stroke({ $0.addArc(center: pt(4, -26), radius: 14, startAngle: .pi * 1.15, endAngle: .pi * 1.45, clockwise: false) },
+                   look.hairLight, 3)
+    case .putinShort:
+        // Very thin and deeply receding: short at the sides, a wispy crown the scalp shows through.
+        fillHair({ p in
+            p.move(to: pt(-27.5, 6))
+            p.addQuadCurve(to: pt(-25, -12), control: pt(-28.5, -4))
+            p.addCurve(to: pt(0, -24.5), control1: pt(-21, -22), control2: pt(-11, -24.5))
+            p.addCurve(to: pt(25, -12), control1: pt(11, -24.5), control2: pt(21, -22))
+            p.addQuadCurve(to: pt(27.5, 6), control: pt(28.5, -4))
+            p.addLine(to: pt(25, 6))
+            p.addQuadCurve(to: pt(22.5, -9), control: pt(23, -2))
+            p.addQuadCurve(to: pt(14, -18), control: pt(19, -16))
+            p.addQuadCurve(to: pt(5, -20.5), control: pt(10, -18.5))
+            p.addQuadCurve(to: pt(-8, -19.5), control: pt(-1, -23))
+            p.addQuadCurve(to: pt(-22.5, -9), control: pt(-18, -16))
+            p.addQuadCurve(to: pt(-25, 6), control: pt(-23, -2))
+            p.closeSubpath()
+        }, outline: 0.9)
+        for x: CGFloat in [-12, -3, 7, 15] { strand([pt(x, -19), pt(x * 0.7, -22.5), pt(x * 0.4, -24.5)], 0.7) }
+        for side: CGFloat in [-1, 1] { strand([pt(side * 24, 3), pt(side * 25.5, -6), pt(side * 23, -14)], 0.7) }
+        ctx.stroke({ $0.addArc(center: pt(2, -8), radius: 11, startAngle: .pi * 1.25, endAngle: .pi * 1.55, clockwise: false) },
+                   rgb(0xFFFFFF, 0.75), 2.2)   // shine on the bare forehead
+    case .xiSlick:
+        // Thick black hair swept up and back into a high front, short and neat at the sides, parted on one side.
+        fillHair { p in
+            p.move(to: pt(-28, 4))
+            p.addQuadCurve(to: pt(-29, -16), control: pt(-30, -6))
+            p.addCurve(to: pt(-6, -39), control1: pt(-29, -32), control2: pt(-20, -39))
+            p.addCurve(to: pt(27, -25), control1: pt(10, -40), control2: pt(25, -36))
+            p.addQuadCurve(to: pt(28, -8), control: pt(31, -17))
+            p.addQuadCurve(to: pt(25, -6), control: pt(27, -6))
+            p.addQuadCurve(to: pt(21, -17), control: pt(23, -12))
+            p.addQuadCurve(to: pt(2, -22), control: pt(13, -23.5))
+            p.addQuadCurve(to: pt(-14, -19), control: pt(-6, -22))
+            p.addQuadCurve(to: pt(-24, -6), control: pt(-21, -15))
+            p.addLine(to: pt(-25, 4))
+            p.closeSubpath()
+        }
+        // Comb lines running back from the hairline, and the part.
+        strand([pt(17, -21), pt(14, -34), pt(-1, -41)], 1)
+        strand([pt(7, -22.5), pt(2, -34), pt(-12, -39)], 1)
+        strand([pt(-3, -22), pt(-9, -31), pt(-21, -35)], 1)
+        strand([pt(-13, -19.5), pt(-16, -24), pt(-21, -30)], 1.6)
+        ctx.stroke({ p in p.move(to: pt(-2, -35)); p.addQuadCurve(to: pt(22, -29), control: pt(12, -38)) }, look.hairLight, 2.6)
+    case .kimSide:
+        // Tall flat-top over shaved sides.
+        fillHair { p in
+            p.move(to: pt(-26, -6))
+            p.addLine(to: pt(-27, -30))
+            p.addQuadCurve(to: pt(28, -36), control: pt(0, -42))
+            p.addQuadCurve(to: pt(28, -14), control: pt(32, -28))
+            p.addLine(to: pt(22, -11))
+            p.addQuadCurve(to: pt(-12, -15), control: pt(6, -17))
+            p.addLine(to: pt(-22, -8))
+            p.closeSubpath()
+        }
+        // Stubble where the sides are shaved.
+        for side: CGFloat in [-1, 1] {
+            ctx.fill({ p in
+                p.move(to: pt(side * 27, -12)); p.addLine(to: pt(side * 22, -10))
+                p.addQuadCurve(to: pt(side * 25, 4), control: pt(side * 21, -2))
+                p.addQuadCurve(to: pt(side * 27, -12), control: pt(side * 28, -4))
+            }, rgb(0x6E6266, 0.55), outlineWidth: 0)
+        }
+        ctx.stroke({ p in p.move(to: pt(-24, -33)); p.addQuadCurve(to: pt(26, -37), control: pt(0, -41)) }, look.hairLight, 2.4)
+        strand([pt(-18, -20), pt(0, -28), pt(20, -28)], 1)
+    default:
+        break
+    }
+}
+
 func drawAccessories(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
     switch look.style {
     case .bob, .spiky, .buns, .ponytail:
         break   // agent mascots use `extras` instead
+    case .trumpSwoop, .putinShort, .xiSlick, .kimSide:
+        break   // the leaders' hair is all drawn by drawLeaderHair
     case .anya:
         // Black horn-shaped hair ornaments.
         for side: CGFloat in [-1, 1] {
@@ -585,5 +754,75 @@ func drawOutfit(_ ctx: CGContext, _ look: Look) {
             ctx.stroke({ p in p.move(to: CGPoint(x: x, y: -44)); p.addLine(to: CGPoint(x: x - 0.5, y: -36)) }, look.accent, 1.3)
             ctx.fillEllipse(CGPoint(x: x - 0.5, y: -35.5), 1.3, 1.3, look.accent)
         }
+    case .suit:
+        // A straight-cut jacket that stops at the hips, over the trousers drawn as legs.
+        let jacket: (CGMutablePath) -> Void = { p in
+            p.move(to: CGPoint(x: -10, y: -48)); p.addLine(to: CGPoint(x: 10, y: -48))
+            p.addQuadCurve(to: CGPoint(x: 14, y: -19), control: CGPoint(x: 15, y: -38))
+            p.addLine(to: CGPoint(x: 3, y: -18)); p.addLine(to: CGPoint(x: 1, y: -21)); p.addLine(to: CGPoint(x: -1, y: -18))
+            p.addLine(to: CGPoint(x: -13, y: -19))
+            p.addQuadCurve(to: CGPoint(x: -10, y: -48), control: CGPoint(x: -14, y: -38))
+        }
+        ctx.fill(jacket, look.sleeve)
+        ctx.saveGState()
+        let clip = CGMutablePath(); jacket(clip)
+        ctx.addPath(clip); ctx.clip()
+        // Shirt showing in the V of the jacket.
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: -8, y: -49)); p.addLine(to: CGPoint(x: 10, y: -49))
+            p.addLine(to: CGPoint(x: 2, y: -30)); p.addLine(to: CGPoint(x: 0, y: -30)); p.closeSubpath()
+        }, look.shirt, outlineWidth: 0)
+        if let tie = look.tie {
+            // Trump's runs long, past the jacket button.
+            let tip: CGFloat = look.style == .trumpSwoop ? -24 : -31
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: -1.5, y: -46)); p.addLine(to: CGPoint(x: 3.5, y: -46))
+                p.addLine(to: CGPoint(x: 2.6, y: -43.5)); p.addLine(to: CGPoint(x: 3.6, y: tip + 3))
+                p.addLine(to: CGPoint(x: 1, y: tip)); p.addLine(to: CGPoint(x: -1.6, y: tip + 3))
+                p.addLine(to: CGPoint(x: -0.6, y: -43.5)); p.closeSubpath()
+            }, tie, outlineWidth: 1)
+        }
+        // Shirt collar points.
+        for side: CGFloat in [-1, 1] {
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: 1 + side * 1.5, y: -47)); p.addLine(to: CGPoint(x: 1 + side * 8, y: -49))
+                p.addLine(to: CGPoint(x: 1 + side * 4.5, y: -42)); p.closeSubpath()
+            }, look.shirt, outlineWidth: 0.9)
+        }
+        // Lapels.
+        for side: CGFloat in [-1, 1] {
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: 1 + side * 10, y: -49)); p.addLine(to: CGPoint(x: 1 + side * 5, y: -42))
+                p.addLine(to: CGPoint(x: 1 + side * 8, y: -40)); p.addLine(to: CGPoint(x: 1 + side * 1.2, y: -29))
+                p.addLine(to: CGPoint(x: 1 + side * 14, y: -40)); p.closeSubpath()
+            }, look.sleeveDark, outlineWidth: 1)
+        }
+        ctx.stroke({ $0.move(to: CGPoint(x: 1, y: -29)); $0.addLine(to: CGPoint(x: 1, y: -21)) }, look.sleeveDark, 1)
+        ctx.restoreGState()
+        ctx.fillEllipse(CGPoint(x: 3.5, y: -26), 1.3, 1.3, rgb(0x0E0E12))
+        if let pin = look.pin {
+            ctx.fill({ $0.addEllipse(in: CGRect(x: -9, y: -41, width: 4.4, height: 4.4)) }, pin, outlineWidth: 0.9)
+        }
+    case .judogi:
+        // White judo jacket wrapped left over right, tied with a black belt.
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: -10, y: -48)); p.addLine(to: CGPoint(x: 10, y: -48))
+            p.addQuadCurve(to: CGPoint(x: 14, y: -19), control: CGPoint(x: 15, y: -38))
+            p.addLine(to: CGPoint(x: -13, y: -19))
+            p.addQuadCurve(to: CGPoint(x: -10, y: -48), control: CGPoint(x: -14, y: -38))
+        }, look.sleeve)
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: -7, y: -48)); p.addLine(to: CGPoint(x: 8, y: -48)); p.addLine(to: CGPoint(x: 1, y: -38)); p.closeSubpath()
+        }, look.skin, outlineWidth: 1)
+        ctx.stroke({ p in
+            p.move(to: CGPoint(x: -9, y: -48)); p.addLine(to: CGPoint(x: 8, y: -27))
+            p.move(to: CGPoint(x: 10, y: -48)); p.addLine(to: CGPoint(x: 2, y: -38))
+        }, look.sleeveDark, 2.6)
+        ctx.fill({ $0.addRect(CGRect(x: -14, y: -29, width: 28, height: 4.5)) }, rgb(0x1E1E22), outlineWidth: 1)
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: 4, y: -26)); p.addLine(to: CGPoint(x: 1, y: -18)); p.addLine(to: CGPoint(x: 4, y: -18))
+            p.addLine(to: CGPoint(x: 6, y: -25)); p.addLine(to: CGPoint(x: 9, y: -18)); p.addLine(to: CGPoint(x: 12, y: -19))
+            p.addLine(to: CGPoint(x: 8, y: -26)); p.closeSubpath()
+        }, rgb(0x1E1E22), outlineWidth: 1)
     }
 }

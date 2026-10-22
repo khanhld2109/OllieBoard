@@ -6,7 +6,8 @@ The app lives in the menu bar (🐾) only; it has no Dock icon.
 
 ## Features
 
-- **5 characters:** Anya Forger (Spy x Family), Nezuko Kamado (Kimetsu no Yaiba), Frieren (Sousou no Frieren), Hitori Gotoh (Bocchi the Rock!) and Rem (Re:Zero). Each has its own personality and two special moves.
+- **9 characters:** Anya Forger (Spy x Family), Nezuko Kamado (Kimetsu no Yaiba), Frieren (Sousou no Frieren), Hitori Gotoh (Bocchi the Rock!) and Rem (Re:Zero). Each has its own personality and two special moves.
+- **4 playful political caricatures:** Donald Trump (a big beautiful wall rising from the ground, the tariff board), Vladimir Putin (judo throw in a gi, bear ride), Xi Jinping (a parade of tanks rolling past, a Skynet robot that lasers your icons) and Kim Jong Un (applause with a crowd of tearful officials, a missile that bursts into fireworks). Pure meme humor, no real political messages.
 - **Desktop interaction:** characters kick icons across the screen, or line them up in a neat grid in the top-right corner of the main screen.
 - **Play room:** a room drawn on the Desktop, underneath your app windows. Characters placed in it stay on its floor and only play with each other.
 - **AI agent mascots:** running sessions of Claude Code, Codex, Gemini CLI, OpenCode, Cursor Agent and Aider are detected automatically.
