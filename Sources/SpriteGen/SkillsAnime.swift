@@ -1,7 +1,7 @@
 import AppKit
 
 // Special-move rows for the anime series' characters (Kimetsu no Yaiba, One Piece, Attack on Titan,
-// Jujutsu Kaisen, Hunter x Hunter). Each move is 8 frames; see Skills.swift for the shared helpers.
+// Jujutsu Kaisen, Hunter x Hunter) and the Cat Knight. Each move is 8 frames; see Skills.swift for the shared helpers.
 
 func drawAnimeSkill(_ ctx: CGContext, _ look: Look, _ which: Int, _ i: Int) {
     switch (look.id, which) {
@@ -33,6 +33,8 @@ func drawAnimeSkill(_ ctx: CGContext, _ look: Look, _ which: Int, _ i: Int) {
     case ("killua", 2): killuaChocolate(ctx, look, i)
     case ("kurapika", 1): kurapikaChains(ctx, look, i)
     case ("kurapika", 2): kurapikaScarlet(ctx, look, i)
+    case ("catknight", 1): catKnightOath(ctx, look, i)
+    case ("catknight", 2): catKnightShield(ctx, look, i)
     default: break
     }
 }
@@ -766,5 +768,69 @@ private func kurapikaScarlet(_ ctx: CGContext, _ look: Look, _ i: Int) {
         let h = hand(p.armFront, front: true)
         drawChain(ctx, from: h, to: CGPoint(x: h.x + 4 + swing8[i] * 60, y: h.y + 26), sag: 2)
         drawHand(ctx, h, look)
+    }
+}
+
+// MARK: - Cat Knight: the knight's oath and the shield bash
+
+private func catKnightOath(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    // Sword held upright before her face (as in the reference), then brought down in a cut.
+    let sword: [CGFloat] = [.pi, .pi, .pi, .pi, 2.3, 1.6, 1.25, 1.2]
+    var p = Pose()
+    p.armFront = i < 4 ? 2.0 : 2.0 - CGFloat(i - 3) * 0.25; p.armBack = p.armFront + 0.15
+    p.lean = i >= 5 ? 0.08 : 0
+    p.legFront = i >= 5 ? 0.4 : 0; p.legBack = i >= 5 ? -0.3 : 0
+    p.eyes = i < 4 ? .sparkle : .angry; p.brows = i < 4 ? .none : .angry
+    p.mouth = i < 4 ? .o : .open; p.blush = 1
+    drawCharacter(ctx, p, look)
+    inBody(ctx, p) {
+        let h = hand(p.armFront, front: true)
+        drawSword(ctx, grip: h, angle: sword[i], length: 40, blade: rgb(0xD8E2EA), hilt: rgb(0x6A4028))
+        drawHand(ctx, h, look)
+        if (1...3).contains(i) {
+            fillStar(ctx, CGPoint(x: h.x, y: h.y - 44), CGFloat(i) * 1.6 + 1.5, rgb(0xFFE88A))
+        }
+        if i >= 5 {
+            ctx.stroke({ $0.addArc(center: CGPoint(x: 6, y: -50), radius: 42, startAngle: -1.2, endAngle: 1.0, clockwise: false) },
+                       rgb(0xFFFFFF, 0.9 - CGFloat(i - 5) * 0.25), 3)
+        }
+    }
+}
+
+private func catKnightShield(_ ctx: CGContext, _ look: Look, _ i: Int) {
+    // Shoving a shield bigger than herself, with a bash on frames 3 and 4.
+    let push: [CGFloat] = [0, 1, 3, 8, 8, 4, 2, 0]
+    var p = Pose()
+    p.armFront = 1.45; p.armBack = 1.3
+    p.lean = 0.1 + push[i] * 0.01
+    p.legFront = [0.3, 0.5, 0.6, 0.7, 0.7, 0.5, 0.3, 0.2][i]; p.legBack = -p.legFront
+    p.eyes = .angry; p.brows = .angry; p.mouth = push[i] > 6 ? .open : .pout; p.blush = 1
+    drawCharacter(ctx, p, look)
+    inBody(ctx, p) {
+        let x0 = 14 + push[i], x1 = x0 + 34, top: CGFloat = -92, bottom: CGFloat = -2
+        let mid = (x0 + x1) / 2
+        let shield = CGMutablePath()
+        shield.move(to: CGPoint(x: x0, y: top + 8))
+        shield.addQuadCurve(to: CGPoint(x: x1, y: top + 8), control: CGPoint(x: mid, y: top - 6))
+        shield.addLine(to: CGPoint(x: x1, y: bottom - 22))
+        shield.addQuadCurve(to: CGPoint(x: mid, y: bottom), control: CGPoint(x: x1, y: bottom - 6))
+        shield.addQuadCurve(to: CGPoint(x: x0, y: bottom - 22), control: CGPoint(x: x0, y: bottom - 6))
+        shield.closeSubpath()
+        ctx.fill({ $0.addPath(shield) }, rgb(0xB8432E), outlineWidth: 2)
+        ctx.saveGState()
+        ctx.addPath(shield); ctx.clip()
+        ctx.setFillColor(rgb(0x2F4E8C))
+        ctx.fill(CGRect(x: mid - 4, y: top - 10, width: 8, height: bottom - top + 10))
+        ctx.fill(CGRect(x: x0 - 2, y: -56, width: 38, height: 8))
+        for (dx, dy) in [(-9.0, -72.0), (9.0, -72.0), (-9.0, -32.0), (9.0, -32.0)] {
+            fillStar(ctx, CGPoint(x: mid + CGFloat(dx), y: CGFloat(dy)), 4, rgb(0xE3B341))
+        }
+        ctx.restoreGState()
+        ctx.fill({ $0.addEllipse(in: CGRect(x: mid - 5, y: -57, width: 10, height: 10)) }, rgb(0xB8C0CC), outlineWidth: 1.2)
+        if push[i] > 6 {
+            for dy: CGFloat in [-70, -46, -22] {
+                ctx.stroke({ $0.move(to: CGPoint(x: x1 + 4, y: dy)); $0.addLine(to: CGPoint(x: x1 + 12, y: dy - 3)) }, outline, 2)
+            }
+        }
     }
 }

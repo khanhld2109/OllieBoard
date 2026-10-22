@@ -759,6 +759,35 @@ let englishLines: [String: Lines] = [
             "gon": ["%@, how have you been?"],
             "killua": ["%@, look after Gon."],
         ]),
+    // Cat Knight.
+    "catknight": Lines(
+        shortName: "Cat Knight",
+        lines: [
+            .happy: ["Meow! ♪", "For honor! Meow!"],
+            .bored: ["No dragons today...", "Mrrr..."],
+            .tedious: ["This armor is heavy...", "*yawns* meow..."],
+            .grumpy: ["Hsss!", "A knight does not get angry... hsss!"],
+            .kick: ["For the kingdom!", "Begone, foul icon!"],
+            .arrange: ["Line up, soldiers!", "Order in the ranks! Meow!"],
+            .click: ["Meow?", "At your service! ♡"],
+            .poke: ["Hsss! Mind the armor!"],
+            .wake: ["I was standing guard! Meow..."],
+            .noIcons: ["No foes left. Meow."],
+            .fail: ["My sword is too small..."],
+            .done: ["Quest complete! Meow! ✨"],
+            .greet: ["Greetings, %@! Meow!", "%@! Shall we go on a quest?"],
+            .greetBack: ["Meow, %@!"],
+            .wakeOther: ["%@, wake up! The kingdom needs us!"],
+            .hit: ["%@! That was not knightly!"],
+            .sorry: ["Forgive me... meow."],
+            .pranked: ["%@ knocked over my helmet!"],
+            .chased: ["Tactical retreat! Meow!"],
+            .comfort: ["%@, I shall protect you."],
+            .thanks: ["Thank you, %@! Purr..."],
+            .together: ["%@, rest here. I will keep watch."],
+            .knightOath: ["I swear upon my sword! Meow!", "By my oath... charge!"],
+            .shieldBash: ["Shield, forward! Mrrr!", "Behold my mighty shield!"],
+        ]),
     "agent": Lines(
         shortName: "Agent",
         lines: [
@@ -839,4 +868,6 @@ let englishSkillNames: [Skill: String] = [
     .chocolate: "Chocorobot",
     .chainJail: "Chain Jail",
     .scarletEyes: "Scarlet Eyes",
+    .knightOath: "Knight's oath",
+    .shieldBash: "Shield bash",
 ]

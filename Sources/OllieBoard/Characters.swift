@@ -29,6 +29,7 @@ enum Skill: String {
     case jajanken, fishing          // Gon
     case godspeed, chocolate        // Killua
     case chainJail, scarletEyes     // Kurapika
+    case knightOath, shieldBash     // Cat Knight
 
     var title: String { skillNames[Language.current]?[self] ?? rawValue }
 }
@@ -44,6 +45,7 @@ enum Series: String, CaseIterable {
     case frieren = "Sousou no Frieren"
     case bocchi = "Bocchi the Rock!"
     case reZero = "Re:Zero"
+    case catKnight = "Cat Knight"
     case politics = "Chính trị"
 
     /// Series names stay as they are; only "politics" is translated.
@@ -164,6 +166,12 @@ let allCharacters: [Character] = [
         id: "kurapika", name: "Kurapika", series: .hunterXHunter, walkSpeed: 95,
         weights: [.wander: 2, .kick: 1, .arrange: 3, .bored: 1.5, .sleep: 1, .grumpy: 1, .happy: 0.7, .social: 1, .skill: 1.2],
         grumpyAnim: .grumpy, shy: false, prankster: false, skills: [.chainJail, .scarletEyes]),
+
+    // A kitten in armor, made from the reference in new-charactor/.
+    Character(
+        id: "catknight", name: "Cat Knight", series: .catKnight, walkSpeed: 85,
+        weights: [.wander: 3, .kick: 2, .arrange: 1.5, .bored: 1, .sleep: 2, .grumpy: 0.5, .happy: 2.5, .social: 2.5, .skill: 1.2],
+        grumpyAnim: .grumpy, shy: false, prankster: false, skills: [.knightOath, .shieldBash]),
 
     // Playful political caricatures, same sketch skeleton as the anime cast.
     Character(

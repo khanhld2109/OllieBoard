@@ -13,6 +13,7 @@ The app lives in the menu bar (🐾) only; it has no Dock icon.
   - Jujutsu Kaisen: Yuji, Gojo, Megumi
   - Hunter x Hunter: Gon, Killua, Kurapika
   - Also Anya Forger (Spy x Family), Frieren (Sousou no Frieren), Hitori Gotoh (Bocchi the Rock!) and Rem (Re:Zero).
+  - Cat Knight: a kitten in armor with a pink bow and a cream cape, who swears on her sword and charges behind a shield bigger than herself.
 
   Each has its own personality and two special moves from their story, for example Tanjiro's Water Breathing, Luffy's Gum-Gum Pistol, Levi cleaning up your Desktop, Gojo's Infinite Void freezing everyone nearby, and Kurapika's chains pulling icons back to him.
 - **4 playful political caricatures:** Donald Trump (a big beautiful wall rising from the ground, the tariff board), Vladimir Putin (judo throw in a gi, bear ride), Xi Jinping (a parade of tanks rolling past, a Skynet robot that lasers your icons) and Kim Jong Un (applause with a crowd of tearful officials, a missile that bursts into fireworks). Pure meme humor, no real political messages.

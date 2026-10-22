@@ -755,6 +755,35 @@ let vietnameseLines: [String: Lines] = [
             "gon": ["%@, cậu vẫn khỏe chứ?"],
             "killua": ["%@, đừng ăn nhiều kẹo quá."],
         ]),
+    // Cat Knight.
+    "catknight": Lines(
+        shortName: "Mèo Hiệp Sĩ",
+        lines: [
+            .happy: ["Meo! ♪", "Vì danh dự! Meo!"],
+            .bored: ["Hôm nay chẳng có con rồng nào...", "Grừ..."],
+            .tedious: ["Bộ giáp nặng quá...", "*ngáp* meo..."],
+            .grumpy: ["Khè!", "Hiệp sĩ không được giận... khè!"],
+            .kick: ["Vì vương quốc!", "Biến đi, icon xấu xa!"],
+            .arrange: ["Xếp hàng nào, các binh sĩ!", "Hàng ngũ chỉnh tề! Meo!"],
+            .click: ["Meo?", "Sẵn sàng phục vụ! ♡"],
+            .poke: ["Khè! Cẩn thận bộ giáp!"],
+            .wake: ["Ta đang canh gác mà! Meo..."],
+            .noIcons: ["Hết kẻ thù rồi. Meo."],
+            .fail: ["Kiếm của ta nhỏ quá..."],
+            .done: ["Hoàn thành nhiệm vụ! Meo! ✨"],
+            .greet: ["Xin chào %@! Meo!", "%@! Cùng đi phiêu lưu không?"],
+            .greetBack: ["Meo, %@!"],
+            .wakeOther: ["%@, dậy đi! Vương quốc cần chúng ta!"],
+            .hit: ["%@! Thế là không hiệp sĩ chút nào!"],
+            .sorry: ["Thứ lỗi cho ta... meo."],
+            .pranked: ["%@ làm đổ mũ giáp của ta rồi!"],
+            .chased: ["Rút lui chiến thuật! Meo!"],
+            .comfort: ["%@, ta sẽ bảo vệ bạn."],
+            .thanks: ["Cảm ơn %@! Grừ grừ..."],
+            .together: ["%@, nghỉ ở đây đi. Ta sẽ canh gác."],
+            .knightOath: ["Ta xin thề trên thanh kiếm này! Meo!", "Theo lời thề... xung phong!"],
+            .shieldBash: ["Khiên, tiến lên! Grừ!", "Hãy xem tấm khiên vĩ đại của ta!"],
+        ]),
     "agent": Lines(
         shortName: "Agent",
         lines: [
@@ -835,4 +864,6 @@ let vietnameseSkillNames: [Skill: String] = [
     .chocolate: "Chocorobot",
     .chainJail: "Ngục Xích",
     .scarletEyes: "Mắt Đỏ Rực",
+    .knightOath: "Lời thề hiệp sĩ",
+    .shieldBash: "Đẩy khiên",
 ]

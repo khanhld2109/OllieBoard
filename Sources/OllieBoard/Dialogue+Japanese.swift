@@ -754,6 +754,35 @@ let japaneseLines: [String: Lines] = [
             "gon": ["%@、無茶はするな。"],
             "killua": ["%@、ゴンを頼む。"],
         ]),
+    // Cat Knight.
+    "catknight": Lines(
+        shortName: "ネコ騎士",
+        lines: [
+            .happy: ["ニャー！♪", "名誉のために！ニャ！"],
+            .bored: ["今日はドラゴンがいないニャ…", "ゴロゴロ…"],
+            .tedious: ["この鎧、重いニャ…", "*あくび* ニャ…"],
+            .grumpy: ["シャーッ！", "騎士は怒らない…シャーッ！"],
+            .kick: ["王国のために！", "去れ、悪しきアイコン！"],
+            .arrange: ["整列！兵士たち！", "隊列を乱すなニャ！"],
+            .click: ["ニャ？", "なんなりとお申し付けを！♡"],
+            .poke: ["シャーッ！鎧に気をつけて！"],
+            .wake: ["見張りをしていたニャ！…"],
+            .noIcons: ["敵はもういないニャ。"],
+            .fail: ["剣が小さすぎるニャ…"],
+            .done: ["任務完了ニャ！✨"],
+            .greet: ["ごきげんよう、%@！ニャ！", "%@！一緒に冒険に行くニャ？"],
+            .greetBack: ["ニャ、%@！"],
+            .wakeOther: ["%@、起きて！王国が呼んでいるニャ！"],
+            .hit: ["%@！騎士らしくないニャ！"],
+            .sorry: ["お許しを…ニャ。"],
+            .pranked: ["%@が兜を倒したニャ！"],
+            .chased: ["戦略的撤退ニャ！"],
+            .comfort: ["%@、わたしが守るニャ。"],
+            .thanks: ["ありがとう、%@！ゴロゴロ…"],
+            .together: ["%@、ここで休むニャ。見張りはわたしが。"],
+            .knightOath: ["この剣に誓うニャ！", "誓いのもとに…突撃ニャ！"],
+            .shieldBash: ["盾、前へ！ニャ！", "わが無敵の盾を見よ！"],
+        ]),
     "agent": Lines(
         shortName: "エージェント",
         lines: [
@@ -834,4 +863,6 @@ let japaneseSkillNames: [Skill: String] = [
     .chocolate: "チョコロボくん",
     .chainJail: "束縛する中指の鎖",
     .scarletEyes: "緋の眼",
+    .knightOath: "騎士の誓い",
+    .shieldBash: "シールドバッシュ",
 ]

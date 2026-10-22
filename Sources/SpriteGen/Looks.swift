@@ -5,9 +5,9 @@ import AppKit
 
 enum HairStyle { case anya, nezuko, frieren, bocchi, rem, bob, spiky, buns, ponytail,
                  trumpSwoop, putinShort, xiSlick, kimSide,
-                 tanjiro, zenitsu, luffy, zoro, nami, eren, levi, yuji, gojo, megumi, gon, killua }
+                 tanjiro, zenitsu, luffy, zoro, nami, eren, levi, yuji, gojo, megumi, gon, killua, catKnight }
 enum Outfit { case eden, kimono, robe, track, maid, hoodie, suit, judogi,
-              haori, vest, haramaki, stripes, surveyCorps, gakuran, jacket }
+              haori, vest, haramaki, stripes, surveyCorps, gakuran, jacket, armor }
 
 /// Likeness details drawn on the face of the real-life caricatures.
 enum FaceDetail { case nose, eyeBags, cheekbones, jowls, thickBrows }
@@ -143,6 +143,14 @@ let looks: [Look] = [
          iris: rgb(0x6A8AA8), irisDark: rgb(0x2E4A66), irisLight: rgb(0xBCD2E8),
          style: .bob, outfit: .robe, sleeve: rgb(0x2F5FB0), sleeveDark: rgb(0x1F4590),
          shoe: rgb(0x3A3A48)),
+
+    // A kitten knight: cream fur with ginger tabby markings, steel armor and a cream cape.
+    Look(id: "catknight",
+         skin: rgb(0xFFEBD6), skinShade: rgb(0xF2CDA8),
+         hair: rgb(0xF0A55A), hairDark: rgb(0xD9823A), hairLight: rgb(0xFFD7A0),
+         iris: rgb(0x3A2A22), irisDark: rgb(0x140C08), irisLight: rgb(0x8A6A55),
+         style: .catKnight, outfit: .armor, sleeve: rgb(0xB8C0CC), sleeveDark: rgb(0x8A929E),
+         shoe: rgb(0x7A828E), sock: rgb(0x9AA2AE), trousers: rgb(0xA8B0BC), eyeScale: 1.1),
 
     // Playful political caricatures: same skin, chibi proportions and suit skeleton,
     // told apart by hair and the tie/pin they always wear.
@@ -338,6 +346,28 @@ func drawLongHair(_ ctx: CGContext, _ look: Look, _ h: CGPoint, swing: CGFloat, 
     case .anya, .rem, .bob, .spiky, .buns, .trumpSwoop, .putinShort, .xiSlick, .kimSide,
          .tanjiro, .zenitsu, .luffy, .zoro, .eren, .levi, .yuji, .gojo, .megumi, .gon, .killua:
         break
+    case .catKnight:
+        // A ginger tail curling up behind her, then the cream cape over it.
+        let base = CGPoint(x: h.x - 10, y: h.y + 54)
+        let tip = CGPoint(x: h.x - 36 + swing * 20, y: h.y + 26)
+        for (color, width) in [(outline, CGFloat(9.4)), (look.hair, CGFloat(7))] {
+            ctx.stroke({ $0.move(to: base); $0.addQuadCurve(to: tip, control: CGPoint(x: h.x - 40, y: h.y + 56)) }, color, width)
+        }
+        ctx.fillEllipse(tip, 3.4, 3.4, look.hairLight)
+        let bottom = h.y + 70 - shorten
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: h.x + 10, y: h.y + 24))
+            p.addQuadCurve(to: CGPoint(x: h.x - 50 + swing * 30, y: bottom - 8), control: CGPoint(x: h.x - 38, y: h.y + 30))
+            p.addQuadCurve(to: CGPoint(x: h.x - 6 + swing * 10, y: bottom), control: CGPoint(x: h.x - 30, y: bottom + 2))
+            p.addLine(to: CGPoint(x: h.x + 2, y: h.y + 40))
+            p.closeSubpath()
+        }, rgb(0xF2E8D2))
+        for k: CGFloat in [0, 1] {
+            ctx.stroke({ p in
+                p.move(to: CGPoint(x: h.x - 8 - k * 10, y: h.y + 34))
+                p.addQuadCurve(to: CGPoint(x: h.x - 22 - k * 14 + swing * 26, y: bottom - 4), control: CGPoint(x: h.x - 22 - k * 12, y: h.y + 50))
+            }, rgb(0xD8CBB0), 1.4)
+        }
     }
 }
 
@@ -376,6 +406,19 @@ func drawHairCap(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
         ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 30, y: h.y - 31, width: 60, height: 54)) }, look.hairDark)
     case .nezuko, .bocchi, .ponytail, .luffy, .zoro, .nami, .levi:
         ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 31, y: h.y - 31, width: 62, height: 56)) }, look.hairDark)
+    case .catKnight:
+        // Cat ears with pink insides, then a rim of fur around the face.
+        for side: CGFloat in [-1, 1] {
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: h.x + side * 26, y: h.y - 14)); p.addLine(to: CGPoint(x: h.x + side * 27, y: h.y - 41))
+                p.addLine(to: CGPoint(x: h.x + side * 6, y: h.y - 28)); p.closeSubpath()
+            }, look.hair)
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: h.x + side * 23, y: h.y - 20)); p.addLine(to: CGPoint(x: h.x + side * 24, y: h.y - 35))
+                p.addLine(to: CGPoint(x: h.x + side * 11, y: h.y - 28)); p.closeSubpath()
+            }, rgb(0xFFB8C8), outlineWidth: 0)
+        }
+        ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 30, y: h.y - 29, width: 60, height: 55)) }, look.hair)
     case .tanjiro, .zenitsu, .eren, .yuji, .gojo, .megumi, .gon, .killua:
         // Spikes as (angle from straight up toward the facing side, distance from the head center).
         let spikes: [(CGFloat, CGFloat)]
@@ -490,6 +533,9 @@ func drawBangs(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
         tips = [(27, 0), (21, -6), (15, 2), (9, -6), (3, 4), (-3, -6), (-9, 2), (-15, -6), (-21, 0), (-27, 2)]
     case .gon:
         tips = [(26, -4), (20, -10), (13, -16), (6, -12), (0, -20), (-6, -14), (-13, -18), (-20, -10), (-26, -4)]
+    case .catKnight:
+        // Short ginger fur over the forehead; the cream face shows below.
+        tips = [(27, 2), (20, -8), (13, -4), (7, -12), (1, -6), (-5, -13), (-11, -6), (-17, -10), (-23, -2), (-27, 2)]
     case .killua:
         tips = [(27, 4), (22, -4), (17, 2), (12, -8), (7, 0), (2, -10), (-3, -1), (-8, -9), (-13, 0), (-18, -7), (-23, 2), (-27, 4)]
     }
@@ -632,6 +678,35 @@ func drawAccessories(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
         break   // agent mascots use `extras` instead (Mikasa and Kurapika need nothing more)
     case .zenitsu, .nami, .eren, .levi, .megumi, .killua, .gon:
         break
+    case .catKnight:
+        // Tabby stripes, cheek fluff, a pink nose, whiskers and the pink bow.
+        for x: CGFloat in [-8, 1, 10] {
+            ctx.stroke({ p in p.move(to: CGPoint(x: h.x + x, y: h.y - 26)); p.addLine(to: CGPoint(x: h.x + x * 1.1, y: h.y - 16)) },
+                       look.hairDark, 2.2)
+        }
+        for side: CGFloat in [-1, 1] {
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: h.x + side * 25, y: h.y + 2)); p.addLine(to: CGPoint(x: h.x + side * 32, y: h.y + 9))
+                p.addLine(to: CGPoint(x: h.x + side * 26, y: h.y + 12)); p.addLine(to: CGPoint(x: h.x + side * 30, y: h.y + 17))
+                p.addLine(to: CGPoint(x: h.x + side * 22, y: h.y + 18)); p.closeSubpath()
+            }, look.skin, outlineWidth: 1.2)
+            for dy: CGFloat in [-2, 2] {
+                ctx.stroke({ p in
+                    p.move(to: CGPoint(x: h.x + 3 + side * 13, y: h.y + 12 + dy * 0.5))
+                    p.addLine(to: CGPoint(x: h.x + 3 + side * 25, y: h.y + 11 + dy * 1.6))
+                }, rgb(0x8A6A55, 0.8), 0.9)
+            }
+        }
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: h.x + 0.5, y: h.y + 9.5)); p.addLine(to: CGPoint(x: h.x + 5.5, y: h.y + 9.5))
+            p.addLine(to: CGPoint(x: h.x + 3, y: h.y + 12.5)); p.closeSubpath()
+        }, rgb(0xF58AA6), outlineWidth: 0.8)
+        let c = CGPoint(x: h.x + 14, y: h.y - 27)
+        ctx.fill({ p in
+            p.move(to: c); p.addLine(to: CGPoint(x: c.x - 9, y: c.y - 7)); p.addLine(to: CGPoint(x: c.x - 8, y: c.y + 6)); p.closeSubpath()
+            p.move(to: c); p.addLine(to: CGPoint(x: c.x + 8, y: c.y - 8)); p.addLine(to: CGPoint(x: c.x + 9, y: c.y + 4)); p.closeSubpath()
+        }, rgb(0xF7A1C4), outlineWidth: 1.1)
+        ctx.fill({ $0.addEllipse(in: CGRect(x: c.x - 2.6, y: c.y - 2.6, width: 5.2, height: 5.2)) }, rgb(0xE07AA6), outlineWidth: 0.9)
     case .trumpSwoop, .putinShort, .xiSlick, .kimSide:
         break   // the leaders' hair is all drawn by drawLeaderHair
     case .anya:
@@ -1103,6 +1178,29 @@ func drawOutfit(_ ctx: CGContext, _ look: Look) {
             p.move(to: CGPoint(x: -3, y: -48)); p.addLine(to: CGPoint(x: -3, y: -28))
             p.move(to: CGPoint(x: 5, y: -48)); p.addLine(to: CGPoint(x: 5, y: -28))
         }, outline, 1)
+    case .armor:
+        // Chain mail under a steel breastplate, a leather belt, pauldrons, and the sword at her hip.
+        ctx.stroke({ $0.move(to: CGPoint(x: -12, y: -31)); $0.addLine(to: CGPoint(x: -24, y: -10)) }, outline, 5)
+        ctx.stroke({ $0.move(to: CGPoint(x: -12, y: -31)); $0.addLine(to: CGPoint(x: -24, y: -10)) }, rgb(0x6A4028), 3)
+        ctx.fillGradient(dressPath, [rgb(0x9AA2AE), rgb(0x6E7682)], from: -48, to: -17)
+        insideDress(ctx) {
+            for (row, y) in stride(from: CGFloat(-27), to: -17, by: 3).enumerated() {
+                for x in stride(from: row % 2 == 0 ? CGFloat(-19) : -17.5, to: 20, by: 3) {
+                    ctx.fillEllipse(CGPoint(x: x, y: y), 0.8, 0.8, rgb(0x4E5662))
+                }
+            }
+            ctx.fillGradient({ $0.addRoundedRect(in: CGRect(x: -15, y: -50, width: 32, height: 21), cornerWidth: 7, cornerHeight: 7) },
+                             [rgb(0xEEF1F5), rgb(0xA8B0BC)], from: -50, to: -29, outlineWidth: 1.2)
+            ctx.stroke({ $0.move(to: CGPoint(x: 1, y: -47)); $0.addLine(to: CGPoint(x: 1, y: -31)) }, white, 1.2)
+            ctx.setFillColor(rgb(0x6A4028))
+            ctx.fill(CGRect(x: -20, y: -30, width: 40, height: 4))
+        }
+        ctx.fill({ $0.addRect(CGRect(x: -1, y: -30.5, width: 5, height: 5)) }, rgb(0xE3B341), outlineWidth: 0.9)
+        ctx.stroke({ $0.move(to: CGPoint(x: -16, y: -34)); $0.addLine(to: CGPoint(x: -9, y: -29)) }, rgb(0xE3B341), 2.4)
+        for side: CGFloat in [-1, 1] {
+            ctx.fillGradient({ $0.addEllipse(in: CGRect(x: 1 + side * 11 - 7, y: -51, width: 14, height: 10)) },
+                             [rgb(0xE6EAF0), rgb(0x9AA2AE)], from: -51, to: -41, outlineWidth: 1.2)
+        }
     case .judogi:
         // White judo jacket wrapped left over right, tied with a black belt.
         ctx.fill({ p in

@@ -1132,6 +1132,29 @@ final class Pet {
                            .run { [weak self] in self?.view.aura(for: 3, color: Pet.scarlet) },
                            .play(.skill2, 3, say: .scarletEyes),
                            .play(.idle, 0.8)])
+        case .knightOath:
+            // Raises the sword (frames 0–3), then cuts on the way down and holds the finish.
+            return engage([.line(.knightOath, to: nil),
+                           .run { [weak self] in self?.view.sparks(color: Pet.thunder, for: 0.5) },
+                           .hold(.skill1, 0.5),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.slash(color: Pet.steel, facing: self.facing)
+                               self.blastAhead(radius: 220)
+                           },
+                           .hold(.skill1, 1),
+                           .play(.happy, 1.2, effect: .heart)])
+        case .shieldBash:
+            // The shield hits on frame 3 of the 8-frame shove.
+            return engage([.play(.skill2, 0.4, say: .shieldBash),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.impact(dx: self.facing * 52)
+                               self.view.shake()
+                               self.blastAhead(radius: 200, reach: 30)
+                           },
+                           .play(.skill2, 1.6),
+                           .play(.happy, 1.2, effect: .sparkle)])
         }
     }
 

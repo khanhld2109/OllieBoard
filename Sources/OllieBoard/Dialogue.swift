@@ -13,7 +13,7 @@ enum Line: CaseIterable {
          waterBreathing, hinokami, thunderclap, clingCry, gomuPistol, gear5, threeSword, getLost, lostAgain,
          climaTact, berries, titanShift, tatakae, odmGear, scarf, spinSlash, cleaning, divergentFist, sukuna,
          infiniteVoid, hollowPurple, divineDogs, rabbitEscape, jajanken, fishing, fishCaught, godspeed, chocolate,
-         chainJail, scarletEyes
+         chainJail, scarletEyes, knightOath, shieldBash
 
     static let agentOnly: Set<Line> = [.agentHello, .agentWorking, .agentDone, .agentNeedsYou, .agentBye]
     /// Special-move lines only some characters have: their own moves, or how they react to someone else's.
@@ -36,6 +36,7 @@ enum Line: CaseIterable {
         .divergentFist: ["yuji"], .sukuna: ["yuji"], .infiniteVoid: ["gojo"], .hollowPurple: ["gojo"],
         .divineDogs: ["megumi"], .rabbitEscape: ["megumi"], .jajanken: ["gon"], .fishing: ["gon"], .fishCaught: ["gon"],
         .godspeed: ["killua"], .chocolate: ["killua"], .chainJail: ["kurapika"], .scarletEyes: ["kurapika"],
+        .knightOath: ["catknight"], .shieldBash: ["catknight"],
     ]
 }
 
