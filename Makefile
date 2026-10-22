@@ -1,4 +1,4 @@
-VERSION ?= 1.0
+VERSION ?= 1.1
 APP     := build/OllieBoard.app
 DMG     := build/OllieBoard-$(VERSION).dmg
 STAGE   := build/dmg-stage
@@ -8,13 +8,13 @@ STAGE   := build/dmg-stage
 help:
 	@echo "make app       build $(APP) (sprites + release build + ad-hoc signing)"
 	@echo "make run       build and open the app"
-	@echo "make dmg       package $(DMG)  (VERSION=x.y to rename)"
+	@echo "make dmg       package $(DMG)  (VERSION=x.y sets the app version)"
 	@echo "make sprites   regenerate the sprite sheets only"
 	@echo "make clean     remove build output"
 	@echo "Set SIGN_IDENTITY to sign with a real certificate instead of ad-hoc."
 
 app:
-	./scripts/build-app.sh
+	VERSION=$(VERSION) ./scripts/build-app.sh
 
 run: app
 	open $(APP)

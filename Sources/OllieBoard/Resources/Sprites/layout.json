@@ -118,7 +118,14 @@
     "flower3",
     "flame",
     "glow",
-    "puff"
+    "puff",
+    "wall",
+    "coin",
+    "boom",
+    "tank",
+    "truck",
+    "dog",
+    "rabbit"
   ],
   "frameSize" : 128,
   "pixelScale" : 2

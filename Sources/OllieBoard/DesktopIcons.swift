@@ -173,7 +173,7 @@ final class DesktopIcons {
             let permission = self.finderPermission()
             guard permission == noErr || permission == OSStatus(procNotFound) else {
                 let error = NSError(domain: "Finder", code: Int(permission), userInfo: [
-                    NSLocalizedDescriptionKey: "OllieBoard chưa được phép điều khiển Finder (\(permission)).",
+                    NSLocalizedDescriptionKey: ui(.finderNotAllowed, "\(permission)"),
                 ])
                 DispatchQueue.main.async { completion(.failure(error)) }
                 return

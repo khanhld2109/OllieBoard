@@ -2,6 +2,8 @@
 # Regenerates the sprite sheets, builds a release binary and wraps it in OllieBoard.app.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# The in-app updater compares this with the latest GitHub release tag (vX.Y).
+VERSION=${VERSION:-1.1}
 
 swift run -c release SpriteGen
 swift build -c release --product OllieBoard
@@ -21,8 +23,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleName</key><string>OllieBoard</string>
     <key>CFBundleExecutable</key><string>OllieBoard</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.0</string>
-    <key>CFBundleVersion</key><string>1</string>
+    <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+    <key>CFBundleVersion</key><string>${VERSION}</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>LSUIElement</key><true/>
     <key>NSAppleEventsUsageDescription</key>

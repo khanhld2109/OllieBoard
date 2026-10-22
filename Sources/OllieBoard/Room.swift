@@ -1,10 +1,27 @@
 import AppKit
 
+/// What the room looks like: the default cozy room, one scene per supported series, and the UN hall for politics.
+enum RoomScene: String, CaseIterable {
+    case cozy, kimetsu, onePiece, attackOnTitan, jujutsuKaisen, hunterXHunter, unitedNations
+
+    var title: String {
+        switch self {
+        case .cozy: return ui(.sceneCozy)
+        case .kimetsu: return ui(.sceneKimetsu)
+        case .onePiece: return ui(.sceneOnePiece)
+        case .attackOnTitan: return ui(.sceneAttackOnTitan)
+        case .jujutsuKaisen: return ui(.sceneJujutsuKaisen)
+        case .hunterXHunter: return ui(.sceneHunterXHunter)
+        case .unitedNations: return ui(.sceneUnitedNations)
+        }
+    }
+}
+
 /// A play room drawn on the desktop, under the app windows. Characters put in it stay on its floor
 /// and only play with each other.
 final class Room {
     static let minSize = CGSize(width: 320, height: 240)
-    private let openKey = "roomOpen", membersKey = "roomMembers", frameKey = "roomFrame"
+    private let openKey = "roomOpen", membersKey = "roomMembers", frameKey = "roomFrame", sceneKey = "roomScene"
 
     /// Called when the room opens or gains a member, so members outside can pop in.
     var onMembersChange: (() -> Void)?
@@ -15,6 +32,7 @@ final class Room {
     private(set) var members: Set<String>
     private(set) var editing = false
     private(set) var frame: CGRect
+    private(set) var scene: RoomScene
 
     private lazy var view: RoomView = {
         let view = RoomView(frame: CGRect(origin: .zero, size: frame.size))
@@ -38,6 +56,7 @@ final class Room {
         let defaults = UserDefaults.standard
         isOpen = defaults.bool(forKey: openKey)
         members = Set(defaults.stringArray(forKey: membersKey) ?? [])
+        scene = defaults.string(forKey: sceneKey).flatMap(RoomScene.init) ?? .cozy
         let saved = defaults.string(forKey: frameKey).map(NSRectFromString)
         // Fall back to the default spot when the screen it was on is gone.
         if let saved, NSScreen.screens.contains(where: { $0.visibleFrame.intersects(saved) }) {
@@ -93,6 +112,12 @@ final class Room {
         if inside && !isOpen { setOpen(true) } else { onMembersChange?() }
     }
 
+    func setScene(_ newScene: RoomScene) {
+        scene = newScene
+        UserDefaults.standard.set(newScene.rawValue, forKey: sceneKey)
+        if !isOpen { setOpen(true) } else { view.needsDisplay = true }
+    }
+
     func setEditing(_ on: Bool) {
         if on && !isOpen { setOpen(true) }
         editing = on
@@ -119,19 +144,20 @@ final class Room {
     }
 }
 
-/// Paints the room: striped wall with a window and a clock, wooden floor and a rug.
-/// While editing it can be dragged around, resized from the bottom-right corner and closed with "Xong".
+/// Paints the room's scene (see RoomScenes.swift); the cozy default is a striped wall with a window and a clock,
+/// wooden floor and a rug.
+/// While editing it can be dragged around, resized from the bottom-right corner and closed with its done button.
 final class RoomView: NSView {
     weak var room: Room?
 
     private var gripRect: CGRect { CGRect(x: bounds.maxX - 30, y: 0, width: 30, height: 30) }
     private var doneRect: CGRect { CGRect(x: bounds.maxX - 74, y: bounds.maxY - 36, width: 62, height: 24) }
 
-    private func color(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat, _ a: CGFloat = 1) -> NSColor {
+    func color(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat, _ a: CGFloat = 1) -> NSColor {
         NSColor(srgbRed: r / 255, green: g / 255, blue: b / 255, alpha: a)
     }
 
-    private func fill(_ rect: CGRect, _ c: NSColor) {
+    func fill(_ rect: CGRect, _ c: NSColor) {
         c.setFill()
         rect.fill(using: .sourceOver)
     }
@@ -143,7 +169,24 @@ final class RoomView: NSView {
 
         NSGraphicsContext.saveGraphicsState()
         outline.addClip()
+        switch room?.scene ?? .cozy {
+        case .cozy: drawCozy(wall: wall, floorH: floorH)
+        case .kimetsu: drawWisteriaNight(wall: wall, floorH: floorH)
+        case .onePiece: drawSunnyDeck(wall: wall, floorH: floorH)
+        case .attackOnTitan: drawWallMaria(wall: wall, floorH: floorH)
+        case .jujutsuKaisen: drawJujutsuHigh(wall: wall, floorH: floorH)
+        case .hunterXHunter: drawWhaleIsland(wall: wall, floorH: floorH)
+        case .unitedNations: drawAssemblyHall(wall: wall, floorH: floorH)
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        color(120, 78, 52, 0.95).setStroke()
+        outline.lineWidth = 3
+        outline.stroke()
 
+        if room?.editing == true { drawEditing() }
+    }
+
+    private func drawCozy(wall: CGRect, floorH: CGFloat) {
         fill(wall, color(253, 240, 232, 0.94))
         for x in stride(from: CGFloat(14), to: bounds.width, by: 38) {
             fill(CGRect(x: x, y: floorH, width: 16, height: wall.height), color(249, 224, 220, 0.94))
@@ -166,13 +209,6 @@ final class RoomView: NSView {
         color(250, 206, 210, 0.95).setFill()
         NSBezierPath(ovalIn: rug.insetBy(dx: 12, dy: 7)).fill()
         fill(CGRect(x: 0, y: floorH - 2, width: bounds.width, height: 9), color(150, 98, 64, 0.97))
-
-        NSGraphicsContext.restoreGraphicsState()
-        color(120, 78, 52, 0.95).setStroke()
-        outline.lineWidth = 3
-        outline.stroke()
-
-        if room?.editing == true { drawEditing() }
     }
 
     private func drawWindow(in wall: CGRect) {
@@ -233,12 +269,12 @@ final class RoomView: NSView {
 
         accent.setFill()
         NSBezierPath(roundedRect: doneRect, xRadius: 7, yRadius: 7).fill()
-        let done = NSAttributedString(string: "Xong", attributes: [
+        let done = NSAttributedString(string: ui(.done), attributes: [
             .font: NSFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: NSColor.white,
         ])
         done.draw(at: CGPoint(x: doneRect.midX - done.size().width / 2, y: doneRect.midY - done.size().height / 2))
 
-        let hint = NSAttributedString(string: "Kéo để di chuyển · kéo góc ↘ để đổi kích thước", attributes: [
+        let hint = NSAttributedString(string: ui(.roomHint), attributes: [
             .font: NSFont.systemFont(ofSize: 11, weight: .medium), .foregroundColor: NSColor.white,
         ])
         let size = hint.size()
