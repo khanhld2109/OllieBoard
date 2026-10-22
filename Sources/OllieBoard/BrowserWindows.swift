@@ -181,15 +181,15 @@ final class BrowserWindows {
         domEnabled && spotsWebArea != nil && window.bundleID.map(Self.domBundleIDs.contains) ?? false
     }
 
-    /// Applies a temporary, self-reverting style change to the element under `spot`. Never clicks or touches
-    /// form fields; `completion(false)` means nothing changed (caller falls back to the overlay).
+    /// Applies a style change to the element under `spot`; it stays until the page is reloaded. Never clicks or
+    /// touches form fields; `completion(false)` means nothing changed (caller falls back to the overlay).
     func editPage(_ window: BrowserWindow, spot: Spot, style: ElementPrank.Style, color: NSColor, sticker: String,
                   duration: TimeInterval, completion: @escaping (Bool) -> Void) {
         guard let bundleID = window.bundleID, let web = spotsWebArea else { return completion(false) }
         let rgb = color.usingColorSpace(.sRGB) ?? .systemPink
         let params: [String: Any] = [
             "sx": spot.frame.midX, "sy": Self.primaryHeight - spot.frame.midY, "wx": web.minX, "wy": web.minY, "ww": web.width,
-            "kind": "\(spot.kind)", "style": style.rawValue, "sticker": sticker, "ms": Int(duration * 1000),
+            "kind": "\(spot.kind)", "style": style.rawValue, "sticker": sticker,
             "color": "rgb(\(Int(rgb.redComponent * 255)),\(Int(rgb.greenComponent * 255)),\(Int(rgb.blueComponent * 255)))",
         ]
         guard let data = try? JSONSerialization.data(withJSONObject: params),
@@ -253,7 +253,7 @@ final class BrowserWindows {
     }
 
     /// Runs in the page. The screen point of the spot is mapped into the page through the web area's frame
-    /// (its width over `innerWidth` is the page zoom). Every change undoes itself after `ms`.
+    /// (its width over `innerWidth` is the page zoom). The change stays until the user reloads the page.
     private static let pageScript = """
     function (p) {
       try {
@@ -266,7 +266,7 @@ final class BrowserWindows {
         var t = el.closest(pick) || el;
         if (t === document.body || t === document.documentElement) return 'skip';
         if (t.closest('input,textarea,select,[contenteditable=""],[contenteditable="true"]')) return 'skip';
-        var css = t.getAttribute('style'), extra = null, s = t.style;
+        var extra = null, s = t.style;
         s.transition = 'all .4s ease';
         if (p.style === 'swell') {
           s.display = getComputedStyle(t).display === 'inline' ? 'inline-block' : s.display;
@@ -286,10 +286,6 @@ final class BrowserWindows {
             t.appendChild(extra); setTimeout(function () { extra.style.transform = 'rotate(20deg) scale(1.4)'; }, 50);
           }
         }
-        setTimeout(function () {
-          if (css === null) t.removeAttribute('style'); else t.setAttribute('style', css);
-          if (extra) extra.remove();
-        }, p.ms);
         return 'ok';
       } catch (e) { return 'err ' + e; }
     }
