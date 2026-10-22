@@ -9,7 +9,11 @@ enum Line: CaseIterable {
     // Special moves (see Skill); "{app}" is replaced by the app the user is in.
     case mindRead, mindReadIdle, readFriend, thought, bloodBurst, shrink, grow, flowers, mimicSpot, mimicEaten, mimicOut,
          guitar, guitarDone, cheer, melt, reform, morningStar, oni, oniCalm,
-         wall, wallBuilt, tariff, judo, bear, parade, paradeOrder, aiRobot, aiRobotDone, applause, missile, boom
+         wall, wallBuilt, tariff, judo, bear, parade, paradeOrder, aiRobot, aiRobotDone, applause, missile, boom,
+         waterBreathing, hinokami, thunderclap, clingCry, gomuPistol, gear5, threeSword, getLost, lostAgain,
+         climaTact, berries, titanShift, tatakae, odmGear, scarf, spinSlash, cleaning, divergentFist, sukuna,
+         infiniteVoid, hollowPurple, divineDogs, rabbitEscape, jajanken, fishing, fishCaught, godspeed, chocolate,
+         chainJail, scarletEyes
 
     static let agentOnly: Set<Line> = [.agentHello, .agentWorking, .agentDone, .agentNeedsYou, .agentBye]
     /// Special-move lines only some characters have: their own moves, or how they react to someone else's.
@@ -25,6 +29,13 @@ enum Line: CaseIterable {
         .judo: ["putin"], .bear: ["putin"],
         .parade: ["xi"], .paradeOrder: ["xi"], .aiRobot: ["xi"], .aiRobotDone: ["xi"],
         .applause: ["kim"], .missile: ["kim"], .boom: ["kim"],
+        .waterBreathing: ["tanjiro"], .hinokami: ["tanjiro"], .thunderclap: ["zenitsu"], .clingCry: ["zenitsu"],
+        .gomuPistol: ["luffy"], .gear5: ["luffy"], .threeSword: ["zoro"], .getLost: ["zoro"], .lostAgain: ["zoro"],
+        .climaTact: ["nami"], .berries: ["nami"], .titanShift: ["eren"], .tatakae: ["eren"],
+        .odmGear: ["mikasa"], .scarf: ["mikasa"], .spinSlash: ["levi"], .cleaning: ["levi"],
+        .divergentFist: ["yuji"], .sukuna: ["yuji"], .infiniteVoid: ["gojo"], .hollowPurple: ["gojo"],
+        .divineDogs: ["megumi"], .rabbitEscape: ["megumi"], .jajanken: ["gon"], .fishing: ["gon"], .fishCaught: ["gon"],
+        .godspeed: ["killua"], .chocolate: ["killua"], .chainJail: ["kurapika"], .scarletEyes: ["kurapika"],
     ]
 }
 

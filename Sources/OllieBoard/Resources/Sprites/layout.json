@@ -123,7 +123,9 @@
     "coin",
     "boom",
     "tank",
-    "truck"
+    "truck",
+    "dog",
+    "rabbit"
   ],
   "frameSize" : 128,
   "pixelScale" : 2

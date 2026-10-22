@@ -32,14 +32,14 @@ func drawSkill(_ ctx: CGContext, _ look: Look, _ which: Int, _ i: Int) {
     case (.xiSlick, 2): xiRobot(ctx, look, i)
     case (.kimSide, 1): kimApplause(ctx, look, i)
     case (.kimSide, 2): kimMissile(ctx, look, i)
-    default: break
+    default: drawAnimeSkill(ctx, look, which, i)
     }
 }
 
 // MARK: - Helpers
 
 /// Runs `draw` in the space drawCharacter draws the body in: origin at the feet, y down, after bob and lean.
-private func inBody(_ ctx: CGContext, _ pose: Pose, _ draw: () -> Void) {
+func inBody(_ ctx: CGContext, _ pose: Pose, _ draw: () -> Void) {
     ctx.saveGState()
     ctx.translateBy(x: feet.x, y: feet.y + pose.bob + (pose.sitting ? 15 : 0))
     ctx.rotate(by: pose.lean)
@@ -48,17 +48,17 @@ private func inBody(_ ctx: CGContext, _ pose: Pose, _ draw: () -> Void) {
 }
 
 /// Where a hand ends up for an arm angle (same geometry as drawCharacter's arms).
-private func hand(_ angle: CGFloat, front: Bool) -> CGPoint {
+func hand(_ angle: CGFloat, front: Bool) -> CGPoint {
     CGPoint(x: (front ? 9 : -9) + sin(angle) * 15, y: -44 + cos(angle) * 15)
 }
 
-private func drawHand(_ ctx: CGContext, _ p: CGPoint, _ look: Look, dark: Bool = false) {
+func drawHand(_ ctx: CGContext, _ p: CGPoint, _ look: Look, dark: Bool = false) {
     ctx.fill({ $0.addEllipse(in: CGRect(x: p.x - 3.4, y: p.y - 3.4, width: 6.8, height: 6.8)) },
              dark ? look.skinShade : look.skin, outlineWidth: 1.2)
 }
 
 /// Redraws an arm on top of a prop that was drawn over it.
-private func drawArm(_ ctx: CGContext, _ angle: CGFloat, _ look: Look, front: Bool) {
+func drawArm(_ ctx: CGContext, _ angle: CGFloat, _ look: Look, front: Bool) {
     limb(ctx, from: CGPoint(x: front ? 9 : -9, y: -44), angle: angle, length: 15, width: 5,
          color: front ? look.sleeve : look.sleeveDark) { drawHand(ctx, $0, look, dark: !front) }
 }

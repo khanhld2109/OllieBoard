@@ -23,6 +23,8 @@ final class Pet {
         case mindRead(Pet), listen(Pet)
         /// Special moves: Putin's judo throw, Kim's applause.
         case tossed(Pet), applaud(Pet)
+        /// Special move: caught in Gojo's Infinite Void, frozen in place.
+        case stunned(Pet)
     }
 
     /// How high above the feet a carried icon is held.
@@ -659,6 +661,10 @@ final class Pet {
             interrupt([.face(direction(to: leader)),
                        .line(.cheer, to: leader.character),
                        .play(.happy, 1.8, effect: .note)])
+        case .stunned(let caster):
+            interrupt([.face(direction(to: caster)),
+                       .play(.surprised, 3.6, effect: .dots),
+                       .play(.sad, 1, effect: .sweat)])
         }
     }
 
@@ -879,7 +885,282 @@ final class Pet {
                            .line(.boom, to: nil),
                            .hold(.skill2, 1.8),
                            .play(.happy, 1.2, effect: .sparkle)])
+        case .waterBreathing:
+            return engage([.play(.skill1, 0.5, say: .waterBreathing),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.slash(color: Pet.water, facing: self.facing, count: 2)
+                               self.blastAhead(radius: 240)
+                           },
+                           .play(.skill1, 1.5),
+                           .play(.happy, 1, effect: .sparkle)])
+        case .hinokami:
+            return engage([.play(.skill2, 0.5, say: .hinokami),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.slash(color: Pet.fire, facing: self.facing, count: 3, full: true)
+                               self.view.sparks(color: Pet.fire, for: 2)
+                               self.blastAround(radius: 220)
+                           },
+                           .play(.skill2, 2),
+                           .play(.happy, 1, effect: .sparkle)])
+        case .thunderclap:
+            // Dozes off, then strikes in his sleep and wakes up wondering what happened.
+            return engage([.play(.sleep, 1.4, effect: .zzz),
+                           .line(.thunderclap, to: nil),
+                           .run { [weak self] in self?.view.sparks(color: Pet.thunder, for: 0.8) },
+                           .play(.skill1, 0.8),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.lightning(dx: 0, color: Pet.thunder)
+                               self.dash(260, color: Pet.thunder)
+                           },
+                           .play(.skill1, 1.2),
+                           .play(.surprised, 0.8, effect: .exclaim)])
+        case .clingCry:
+            // Clings to a friend in tears until they come and comfort him.
+            let friend = nearbyFriends(within: 700).randomElement()
+            friend?.receive(.invite(self))
+            let approach: [Step] = friend.map { [.walk(beside($0)), .face(direction(to: $0))] } ?? []
+            return engage(approach + [.line(.clingCry, to: nil),
+                                      .play(.skill2, 3, effect: .sweat),
+                                      .run { [weak self, weak friend] in if let self, let friend { friend.comfort(self) } }])
+        case .gomuPistol:
+            // The fist lands on frame 4 of the 8-frame stretch.
+            return engage([.play(.skill1, 0.5, say: .gomuPistol),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.impact(dx: self.facing * 112)
+                               self.blastAhead(radius: 150, reach: 100)
+                           },
+                           .play(.skill1, 0.5),
+                           .play(.happy, 1.2, effect: .note)])
+        case .gear5:
+            for friend in nearbyFriends(within: 600) { friend.receive(.applaud(self)) }
+            return engage([.run { [weak self] in
+                               self?.view.aura(for: 3.5, color: CGColor(gray: 1, alpha: 1))
+                               self?.view.sparks(color: CGColor(gray: 1, alpha: 1), for: 3)
+                           },
+                           .play(.skill2, 3.5, say: .gear5),
+                           .play(.happy, 1.2, effect: .note)])
+        case .threeSword:
+            return engage([.play(.skill1, 0.5, say: .threeSword),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.slash(color: Pet.steel, facing: self.facing, count: 3)
+                               self.blastAhead(radius: 250)
+                           },
+                           .play(.skill1, 1.5),
+                           .play(.idle, 0.6)])
+        case .getLost:
+            // Sets off confidently somewhere else entirely.
+            return engage([.line(.getLost, to: nil),
+                           .play(.skill2, 2),
+                           .walk(randomDestination()),
+                           .play(.skill2, 1.5, effect: .dots),
+                           .line(.lostAgain, to: nil),
+                           .play(.grumpy, 1.2, effect: .sweat)])
+        case .climaTact:
+            return engage([.play(.skill1, 1, say: .climaTact),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.lightning(dx: self.facing * 80)
+                               self.blast(from: CGPoint(x: self.position.x + self.facing * 80, y: self.position.y + 30), radius: 170) { _ in true }
+                           },
+                           .play(.skill1, 1),
+                           .play(.happy, 1, effect: .sparkle)])
+        case .berries:
+            return engage([.play(.skill2, 0.5, say: .berries),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.coins(facing: self.facing)
+                           },
+                           .play(.skill2, 2.5),
+                           .play(.happy, 1.2, effect: .heart)])
+        case .titanShift:
+            // A bolt from the sky, and he comes out of the smoke a lot bigger.
+            return engage([.play(.surprised, 0.4, effect: .exclaim),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.lightning(dx: 0)
+                               self.view.puff()
+                               self.view.shake()
+                               self.targetScale = 1.35
+                               self.resizedUntil = self.now + 5
+                               self.blastAround(radius: 250)
+                           },
+                           .play(.skill1, 4.4, say: .titanShift),
+                           .play(.idle, 0.8)])
+        case .tatakae:
+            for friend in nearbyFriends(within: 600) { friend.receive(.applaud(self)) }
+            return engage([.run { [weak self] in self?.view.aura(for: 2.5, color: Pet.scarlet) },
+                           .play(.skill2, 2.5, say: .tatakae),
+                           .play(.happy, 1, effect: .exclaim)])
+        case .odmGear:
+            return engage([.play(.skill1, 0.4, say: .odmGear),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.dash(260, color: Pet.steel)
+                               self.view.slash(color: Pet.steel, facing: self.facing)
+                           },
+                           .play(.skill1, 1.2),
+                           .play(.idle, 0.6)])
+        case .scarf:
+            return [.play(.skill2, 3, effect: .heart, say: .scarf)]
+        case .spinSlash:
+            return engage([.play(.skill1, 0.3, say: .spinSlash),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.slash(color: Pet.steel, facing: self.facing, count: 3, full: true)
+                               self.blastAround(radius: 210)
+                           },
+                           .play(.skill1, 1.7),
+                           .play(.idle, 0.8)])
+        case .cleaning:
+            // Ties on his bandana and sweeps, then tidies the desktop for real.
+            let tidy = !inRoom && world.arranger == nil ? arrangePlan() : []
+            return [.play(.skill2, 2.5, say: .cleaning)] + tidy
+        case .divergentFist:
+            // The punch, then the delayed second impact of cursed energy.
+            return engage([.play(.skill1, 0.5, say: .divergentFist),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.shockwave(color: Pet.cursed, dx: self.facing * 34, dy: 62, rings: 2)
+                               self.blastAhead(radius: 230)
+                           },
+                           .play(.skill1, 1),
+                           .play(.happy, 1, effect: .sparkle)])
+        case .sukuna:
+            return engage([.play(.surprised, 0.4, effect: .exclaim),
+                           .run { [weak self] in self?.view.aura(for: 3.5, color: Pet.scarlet) },
+                           .play(.skill2, 3.5, say: .sukuna),
+                           .run { [weak self] in self?.view.puff() },
+                           .play(.surprised, 0.8, effect: .sweat)])
+        case .infiniteVoid:
+            for friend in nearbyFriends(within: 600) { friend.receive(.stunned(self)) }
+            return engage([.play(.skill1, 0.6, say: .infiniteVoid),
+                           .run { [weak self] in self?.view.domain(for: 4) },
+                           .play(.skill1, 3.6),
+                           .play(.happy, 1.2, effect: .sparkle)])
+        case .hollowPurple:
+            // Blue and red come together into purple, then it fires.
+            return engage([.play(.skill2, 1, say: .hollowPurple),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.beam(color: Pet.purple, facing: self.facing, dx: 34, dy: 62, for: 1.4)
+                               let eye = CGPoint(x: self.position.x + self.facing * 34, y: self.position.y + 62)
+                               self.blast(from: eye, radius: 440) { ($0.x - eye.x) * self.facing > 0 && abs($0.y - eye.y) < 110 }
+                           },
+                           .hold(.skill2, 1.4),
+                           .play(.happy, 1.2, effect: .sparkle)])
+        case .divineDogs:
+            return engage([.play(.skill1, 0.8, say: .divineDogs),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.runners(.dog, count: 2, facing: self.facing)
+                               DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.blastAhead(radius: 280) }
+                           },
+                           .play(.skill1, 1.2),
+                           .play(.idle, 0.6)])
+        case .rabbitEscape:
+            return engage([.play(.skill2, 0.6, say: .rabbitEscape),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.runners(.rabbit, count: 12, facing: self.facing, size: 30, scatter: true)
+                           },
+                           .play(.skill2, 1.8),
+                           .play(.idle, 0.6)])
+        case .jajanken:
+            // Charges through rock, paper... and the last frame is the punch.
+            return engage([.line(.jajanken, to: nil),
+                           .hold(.skill1, 1),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.shockwave(color: Pet.thunder, dx: self.facing * 36, dy: 56, rings: 3)
+                               self.view.shake()
+                               self.blastAhead(radius: 250)
+                           },
+                           .hold(.skill1, 0.6),
+                           .play(.happy, 1.2, effect: .sparkle)])
+        case .fishing:
+            return engage([.line(.fishing, to: nil),
+                           .play(.skill2, 3.5),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.shockwave(color: Pet.water, dx: self.facing * 70, dy: 6, rings: 2, to: 2)
+                           },
+                           .play(.happy, 1.8, effect: .sparkle, say: .fishCaught)])
+        case .godspeed:
+            // Zips back and forth in a few flashes of lightning.
+            let zap: Step = .run { [weak self] in
+                guard let self else { return }
+                self.facing = Bool.random() ? 1 : -1
+                self.dash(150, color: Pet.thunder)
+                self.view.lightning(dx: 0, color: Pet.cursed)
+            }
+            return engage([.play(.skill1, 0.6, say: .godspeed),
+                           .run { [weak self] in self?.view.sparks(color: Pet.cursed, for: 2) },
+                           zap, .play(.skill1, 0.4), zap, .play(.skill1, 0.4), zap,
+                           .play(.skill1, 0.6),
+                           .play(.happy, 1, effect: .sparkle)])
+        case .chocolate:
+            return [.play(.skill2, 2.5, effect: .heart, say: .chocolate)]
+        case .chainJail:
+            // The chain shoots out and drags the icons ahead back in a neat row at his feet.
+            return engage([.play(.skill1, 0.5, say: .chainJail),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.chain(facing: self.facing)
+                               guard !self.inRoom else { return }
+                               let icons = self.world.availableIcons()
+                                   .filter { ($0.center.x - self.position.x) * self.facing > 0
+                                       && hypot($0.center.x - self.position.x, $0.center.y - self.position.y) < 380 }
+                                   .prefix(4)
+                               let frame = self.screenFrame(containing: self.position)
+                               var paths: [String: [CGPoint]] = [:]
+                               for (i, icon) in icons.enumerated() {
+                                   let x = self.position.x + self.facing * CGFloat(i + 1) * 60
+                                   paths[icon.name] = [CGPoint(x: min(max(x, frame.minX + 40), frame.maxX - 40),
+                                                               y: min(max(self.position.y + 30, frame.minY + 40), frame.maxY - 60))]
+                               }
+                               if !paths.isEmpty { self.world.desktop.moveAll(paths) }
+                           },
+                           .play(.skill1, 1.5),
+                           .play(.idle, 0.6)])
+        case .scarletEyes:
+            return engage([.play(.surprised, 0.4, effect: .exclaim),
+                           .run { [weak self] in self?.view.aura(for: 3, color: Pet.scarlet) },
+                           .play(.skill2, 3, say: .scarletEyes),
+                           .play(.idle, 0.8)])
         }
+    }
+
+    /// Colors for the anime series' moves.
+    private static let water = CGColor(srgbRed: 0.3, green: 0.62, blue: 1, alpha: 0.9)
+    private static let fire = CGColor(srgbRed: 1, green: 0.5, blue: 0.15, alpha: 0.9)
+    private static let steel = CGColor(srgbRed: 0.85, green: 0.9, blue: 0.95, alpha: 0.9)
+    private static let thunder = CGColor(srgbRed: 1, green: 0.85, blue: 0.25, alpha: 1)
+    private static let cursed = CGColor(srgbRed: 0.35, green: 0.55, blue: 1, alpha: 1)
+    private static let purple = CGColor(srgbRed: 0.65, green: 0.3, blue: 1, alpha: 1)
+    private static let scarlet = CGColor(srgbRed: 1, green: 0.15, blue: 0.2, alpha: 1)
+
+    /// Blasts the icons (and friends) in front of the pet, from about waist height.
+    private func blastAhead(radius: CGFloat, reach: CGFloat = 0) {
+        let origin = CGPoint(x: position.x + facing * reach, y: position.y + 50)
+        blast(from: origin, radius: radius) { [facing] in ($0.x - origin.x) * facing > -20 }
+    }
+
+    /// Blasts everything around the pet.
+    private func blastAround(radius: CGFloat) {
+        blast(from: CGPoint(x: position.x, y: position.y + 50), radius: radius) { _ in true }
+    }
+
+    /// Jumps `distance` points ahead in an instant (staying on screen, or on the room's floor), clearing the way.
+    private func dash(_ distance: CGFloat, color: CGColor) {
+        let from = position
+        position = confined(clampToScreens(CGPoint(x: position.x + facing * distance, y: position.y)))
+        view.streak(facing: facing, color: color)
+        blast(from: CGPoint(x: (from.x + position.x) / 2, y: position.y + 50), radius: abs(position.x - from.x) / 2 + 60) { _ in true }
     }
 
     /// Friends on the same side of the room walls who are free to join in.

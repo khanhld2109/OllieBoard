@@ -6,10 +6,18 @@ The app lives in the menu bar (🐾) only; it has no Dock icon.
 
 ## Features
 
-- **9 characters:** Anya Forger (Spy x Family), Nezuko Kamado (Kimetsu no Yaiba), Frieren (Sousou no Frieren), Hitori Gotoh (Bocchi the Rock!) and Rem (Re:Zero). Each has its own personality and two special moves.
+- **Anime characters, grouped by series in the menu:**
+  - Kimetsu no Yaiba: Nezuko, Tanjiro, Zenitsu
+  - One Piece: Luffy, Zoro, Nami
+  - Attack on Titan: Eren, Mikasa, Levi
+  - Jujutsu Kaisen: Yuji, Gojo, Megumi
+  - Hunter x Hunter: Gon, Killua, Kurapika
+  - Also Anya Forger (Spy x Family), Frieren (Sousou no Frieren), Hitori Gotoh (Bocchi the Rock!) and Rem (Re:Zero).
+
+  Each has its own personality and two special moves from their story, for example Tanjiro's Water Breathing, Luffy's Gum-Gum Pistol, Levi cleaning up your Desktop, Gojo's Infinite Void freezing everyone nearby, and Kurapika's chains pulling icons back to him.
 - **4 playful political caricatures:** Donald Trump (a big beautiful wall rising from the ground, the tariff board), Vladimir Putin (judo throw in a gi, bear ride), Xi Jinping (a parade of tanks rolling past, a Skynet robot that lasers your icons) and Kim Jong Un (applause with a crowd of tearful officials, a missile that bursts into fireworks). Pure meme humor, no real political messages.
 - **Desktop interaction:** characters kick icons across the screen, or line them up in a neat grid in the top-right corner of the main screen.
-- **Play room:** a room drawn on the Desktop, underneath your app windows. Characters placed in it stay on its floor and only play with each other.
+- **Play room:** a room drawn on the Desktop, underneath your app windows. Characters placed in it stay on its floor and only play with each other. Pick its scenery: a cozy room, one scene per supported series (a wisteria night, the Thousand Sunny's deck, Wall Maria, Tokyo Jujutsu High, Whale Island), or the UN General Assembly hall for the politicians.
 - **AI agent mascots:** running sessions of Claude Code, Codex, Gemini CLI, OpenCode, Cursor Agent and Aider are detected automatically.
 - **3 dialogue languages:** Vietnamese, English and Japanese.
 
@@ -31,8 +39,8 @@ Everything is in the 🐾 menu in the menu bar. The menu labels are in Vietnames
 
 | Menu item | What it does |
 | --- | --- |
-| Nhân vật (Characters) | Turn each character on or off. Only Nezuko is on by default. |
-| Phòng chơi (Play room) | Show the room, choose who is inside it, and move or resize it. |
+| Nhân vật (Characters) | One submenu per series (plus Chính trị, politics); turn each character on or off. Only Nezuko is on by default. |
+| Phòng chơi (Play room) | Show the room, pick its scenery (Phong cảnh), choose who is inside it, and move or resize it. |
 | Ngôn ngữ / Language / 言語 | Change the dialogue language. |
 | Nhân vật cho AI agent (Characters for AI agents) | Turn agent mascots on or off, pick which agents, install the Claude Code hook. |
 | Đá một icon ngay (Kick an icon now) | Make a character kick an icon right away. |
@@ -97,6 +105,7 @@ Sources/
     Pet.swift            Behavior and special moves of one character
     PetWindow.swift      Transparent window that draws a character and handles the mouse
     Room.swift           The play room
+    RoomScenes.swift     The play room's scenery for each series
     DesktopIcons.swift   Reads and moves Desktop icons through AppleScript (Finder)
     AgentMonitor.swift   Detects running AI agent sessions
     ClaudeHooks.swift    Installs the status hooks for Claude Code

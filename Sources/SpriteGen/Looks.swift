@@ -4,8 +4,10 @@ import AppKit
 // an AI coding agent), built from the same skeleton so all sheets share identical animation rows.
 
 enum HairStyle { case anya, nezuko, frieren, bocchi, rem, bob, spiky, buns, ponytail,
-                 trumpSwoop, putinShort, xiSlick, kimSide }
-enum Outfit { case eden, kimono, robe, track, maid, hoodie, suit, judogi }
+                 trumpSwoop, putinShort, xiSlick, kimSide,
+                 tanjiro, zenitsu, luffy, zoro, nami, eren, levi, yuji, gojo, megumi, gon, killua }
+enum Outfit { case eden, kimono, robe, track, maid, hoodie, suit, judogi,
+              haori, vest, haramaki, stripes, surveyCorps, gakuran, jacket }
 
 /// Likeness details drawn on the face of the real-life caricatures.
 enum FaceDetail { case nose, eyeBags, cheekbones, jowls, thickBrows }
@@ -16,8 +18,8 @@ enum Accessory { case starClip, sparkleClip, cubeClip, glasses, headphones, bean
 struct Look {
     let id: String
     var skin = rgb(0xFFE6D6), skinShade = rgb(0xF3C7B4)
-    let hair: CGColor, hairDark: CGColor, hairLight: CGColor
-    let iris: CGColor, irisDark: CGColor, irisLight: CGColor
+    var hair: CGColor, hairDark: CGColor, hairLight: CGColor
+    var iris: CGColor, irisDark: CGColor, irisLight: CGColor
     let style: HairStyle
     var outfit: Outfit
     var sleeve: CGColor, sleeveDark: CGColor
@@ -28,15 +30,20 @@ struct Look {
     var muzzle = false
     var accent = rgb(0xE3B341)     // small details: hoodie strings, laptop logo, clips
     var extras: [Accessory] = []
-    /// Suit extras: a tie (Trump's long red one) and a lapel pin.
+    /// Suit extras: a tie (Trump's long red one) and a lapel pin. The tie color is also the
+    /// Survey Corps neckwear (Mikasa's scarf, Levi's cravat) and the hood on a Jujutsu High uniform.
     var tie: CGColor? = nil
     var pin: CGColor? = nil
     var shirt = white
+    /// Trousers drawn as the legs; nil shows bare legs (or the suit's trousers).
+    var trousers: CGColor? = nil
     /// Width factor for the face and body (Kim is a little rounder).
     var build: CGFloat = 1
     var eyeScale: CGFloat = 1
     var blushScale: CGFloat = 1
     var face: Set<FaceDetail> = []
+    /// Gojo's blindfold over the eyes (Infinite Void takes it off).
+    var blindfold = false
 }
 
 let looks: [Look] = [
@@ -63,6 +70,79 @@ let looks: [Look] = [
          hair: rgb(0x8DBBF7), hairDark: rgb(0x5B8AD6), hairLight: rgb(0xCDE2FF),
          iris: rgb(0x4F86E8), irisDark: rgb(0x1F3F87), irisLight: rgb(0xB3CCFF),
          style: .rem, outfit: .maid, sleeve: rgb(0x2B2B35), sleeveDark: rgb(0x1C1C24)),
+
+    // Anime series: three characters each for now (Nezuko is above).
+    Look(id: "tanjiro",
+         hair: rgb(0x5A2A2A), hairDark: rgb(0x3A1A1E), hairLight: rgb(0x9A4A44),
+         iris: rgb(0xB0443A), irisDark: rgb(0x5E1E1A), irisLight: rgb(0xF0A090),
+         style: .tanjiro, outfit: .haori, sleeve: rgb(0x2E8A5A), sleeveDark: rgb(0x1E6040),
+         shoe: rgb(0xC8A060), accent: rgb(0x1E1E24), trousers: rgb(0x22222A)),
+    Look(id: "zenitsu",
+         hair: rgb(0xF7C93A), hairDark: rgb(0xE88A2A), hairLight: rgb(0xFFF0A0),
+         iris: rgb(0xD9A030), irisDark: rgb(0x7A4A10), irisLight: rgb(0xFFE0A0),
+         style: .zenitsu, outfit: .haori, sleeve: rgb(0xF4C542), sleeveDark: rgb(0xD9A22E),
+         shoe: rgb(0xC8A060), accent: white, trousers: rgb(0x22222A)),
+    Look(id: "luffy",
+         hair: rgb(0x2A2A30), hairDark: rgb(0x18181C), hairLight: rgb(0x5A5A66),
+         iris: rgb(0x3A2A22), irisDark: rgb(0x1A100A), irisLight: rgb(0x7A5A4A),
+         style: .luffy, outfit: .vest, sleeve: rgb(0xFFE6D6), sleeveDark: rgb(0xF3C7B4),
+         shoe: rgb(0x8A5A3C), sock: rgb(0xFFE6D6), accent: rgb(0xD83A3A)),
+    Look(id: "zoro",
+         hair: rgb(0x5FB860), hairDark: rgb(0x3A8A44), hairLight: rgb(0xA6E0A0),
+         iris: rgb(0x3A3A30), irisDark: rgb(0x18180F), irisLight: rgb(0x8A8A78),
+         style: .zoro, outfit: .haramaki, sleeve: rgb(0xF4F4F0), sleeveDark: rgb(0xD8D8D0),
+         shoe: rgb(0x22222A), sock: rgb(0x22222A), restingLid: 0.35, accent: rgb(0x3E8A4A), trousers: rgb(0x2A2A30)),
+    Look(id: "nami",
+         hair: rgb(0xF58A3A), hairDark: rgb(0xD9661E), hairLight: rgb(0xFFC08A),
+         iris: rgb(0xA0602A), irisDark: rgb(0x5A3010), irisLight: rgb(0xE8B080),
+         style: .nami, outfit: .stripes, sleeve: rgb(0xFFE6D6), sleeveDark: rgb(0xF3C7B4),
+         shoe: rgb(0xC8743A), accent: rgb(0x3A7AD9)),
+    Look(id: "eren",
+         hair: rgb(0x5A3E2E), hairDark: rgb(0x3A2618), hairLight: rgb(0x8A6A52),
+         iris: rgb(0x3FAE9A), irisDark: rgb(0x1A5A50), irisLight: rgb(0xA0E8D8),
+         style: .eren, outfit: .surveyCorps, sleeve: rgb(0x8A5A3A), sleeveDark: rgb(0x6A4028),
+         shoe: rgb(0x4A3020), sock: rgb(0x4A3020), trousers: rgb(0xF0EEE6)),
+    Look(id: "mikasa",
+         hair: rgb(0x22222A), hairDark: rgb(0x111116), hairLight: rgb(0x55556A),
+         iris: rgb(0x3A3A44), irisDark: rgb(0x18181E), irisLight: rgb(0x8A8A9A),
+         style: .bob, outfit: .surveyCorps, sleeve: rgb(0x8A5A3A), sleeveDark: rgb(0x6A4028),
+         shoe: rgb(0x4A3020), sock: rgb(0x4A3020), restingLid: 0.25, tie: rgb(0xC8323A), trousers: rgb(0xF0EEE6)),
+    Look(id: "levi",
+         hair: rgb(0x222228), hairDark: rgb(0x111114), hairLight: rgb(0x55555F),
+         iris: rgb(0x6A7480), irisDark: rgb(0x2E343C), irisLight: rgb(0xB0B8C4),
+         style: .levi, outfit: .surveyCorps, sleeve: rgb(0x8A5A3A), sleeveDark: rgb(0x6A4028),
+         shoe: rgb(0x4A3020), sock: rgb(0x4A3020), restingLid: 0.5, tie: rgb(0xF4F4F4), trousers: rgb(0xF0EEE6),
+         eyeScale: 0.85),
+    Look(id: "yuji",
+         hair: rgb(0xF2A0A0), hairDark: rgb(0x6A4A40), hairLight: rgb(0xFFD0D0),
+         iris: rgb(0x8A5A3A), irisDark: rgb(0x4A2A18), irisLight: rgb(0xD0A080),
+         style: .yuji, outfit: .gakuran, sleeve: rgb(0x2A3050), sleeveDark: rgb(0x1C2038),
+         shoe: rgb(0x1E1E24), sock: rgb(0x1E1E24), tie: rgb(0xD83A3A), trousers: rgb(0x1C2038)),
+    Look(id: "gojo",
+         hair: rgb(0xF4F6FA), hairDark: rgb(0xC8D0E0), hairLight: white,
+         iris: rgb(0x5EC8F0), irisDark: rgb(0x1E6A9A), irisLight: rgb(0xCFF0FF),
+         style: .gojo, outfit: .gakuran, sleeve: rgb(0x22243A), sleeveDark: rgb(0x16182A),
+         shoe: rgb(0x1E1E24), sock: rgb(0x1E1E24), trousers: rgb(0x16182A), blindfold: true),
+    Look(id: "megumi",
+         hair: rgb(0x24262E), hairDark: rgb(0x121318), hairLight: rgb(0x5A5E70),
+         iris: rgb(0x3A5A7A), irisDark: rgb(0x1A2A40), irisLight: rgb(0x9AB8D8),
+         style: .megumi, outfit: .gakuran, sleeve: rgb(0x2A3050), sleeveDark: rgb(0x1C2038),
+         shoe: rgb(0x1E1E24), sock: rgb(0x1E1E24), restingLid: 0.35, trousers: rgb(0x1C2038)),
+    Look(id: "gon",
+         hair: rgb(0x24302A), hairDark: rgb(0x101812), hairLight: rgb(0x4E7A5A),
+         iris: rgb(0x6A4A2A), irisDark: rgb(0x34200E), irisLight: rgb(0xC0A070),
+         style: .gon, outfit: .jacket, sleeve: rgb(0x3E9A4E), sleeveDark: rgb(0x2A7A3A),
+         shoe: rgb(0x3E7A3A), sock: rgb(0x3E7A3A)),
+    Look(id: "killua",
+         hair: rgb(0xEEF0F6), hairDark: rgb(0xC6CAD8), hairLight: white,
+         iris: rgb(0x5AA0E8), irisDark: rgb(0x204A8A), irisLight: rgb(0xBBDCFF),
+         style: .killua, outfit: .hoodie, sleeve: rgb(0xF0F0F6), sleeveDark: rgb(0xD0D2DE),
+         shoe: rgb(0x5A4A7A), accent: rgb(0x6A5AA8)),
+    Look(id: "kurapika",
+         hair: rgb(0xF6D77A), hairDark: rgb(0xD9B24E), hairLight: rgb(0xFFF0BE),
+         iris: rgb(0x6A8AA8), irisDark: rgb(0x2E4A66), irisLight: rgb(0xBCD2E8),
+         style: .bob, outfit: .robe, sleeve: rgb(0x2F5FB0), sleeveDark: rgb(0x1F4590),
+         shoe: rgb(0x3A3A48)),
 
     // Playful political caricatures: same skin, chibi proportions and suit skeleton,
     // told apart by hair and the tie/pin they always wear.
@@ -149,7 +229,8 @@ func drawCharacter(_ ctx: CGContext, _ pose: Pose, _ look: Look) {
 
     func leg(_ x: CGFloat, _ angle: CGFloat, dark: Bool) {
         // Suits and judo gis come with trousers; everyone else shows bare legs.
-        let color = [.suit, .judogi].contains(look.outfit) ? (dark ? look.sleeveDark : look.sleeve) : (dark ? look.skinShade : look.skin)
+        let color = look.trousers
+            ?? ([.suit, .judogi].contains(look.outfit) ? (dark ? look.sleeveDark : look.sleeve) : (dark ? look.skinShade : look.skin))
         limb(ctx, from: CGPoint(x: x, y: -20), angle: angle, length: 17, width: 6, color: color) { foot in
             ctx.fillEllipse(CGPoint(x: foot.x, y: foot.y - 3), 3.6, 3, look.sock)
             ctx.saveGState()
@@ -201,7 +282,7 @@ func drawCharacter(_ ctx: CGContext, _ pose: Pose, _ look: Look) {
 func drawLongHair(_ ctx: CGContext, _ look: Look, _ h: CGPoint, swing: CGFloat, sitting: Bool) {
     let shorten: CGFloat = sitting ? 18 : 0   // hair rests on the floor when sitting
     switch look.style {
-    case .nezuko, .bocchi:
+    case .nezuko, .bocchi, .nami:
         let bottom = h.y + (look.style == .nezuko ? 74 : 66) - shorten
         let colors = look.style == .nezuko
             ? [look.hair, look.hair, rgb(0xF08A3C)]   // black fading to orange tips
@@ -254,7 +335,8 @@ func drawLongHair(_ ctx: CGContext, _ look: Look, _ h: CGPoint, swing: CGFloat, 
                        control2: CGPoint(x: top.x - 4, y: top.y + 16))
             p.closeSubpath()
         }, look.hair)
-    case .anya, .rem, .bob, .spiky, .buns, .trumpSwoop, .putinShort, .xiSlick, .kimSide:
+    case .anya, .rem, .bob, .spiky, .buns, .trumpSwoop, .putinShort, .xiSlick, .kimSide,
+         .tanjiro, .zenitsu, .luffy, .zoro, .eren, .levi, .yuji, .gojo, .megumi, .gon, .killua:
         break
     }
 }
@@ -292,8 +374,22 @@ func drawHairCap(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
             }, look.skin, outlineWidth: 1.4)
         }
         ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 30, y: h.y - 31, width: 60, height: 54)) }, look.hairDark)
-    case .nezuko, .bocchi, .ponytail:
+    case .nezuko, .bocchi, .ponytail, .luffy, .zoro, .nami, .levi:
         ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 31, y: h.y - 31, width: 62, height: 56)) }, look.hairDark)
+    case .tanjiro, .zenitsu, .eren, .yuji, .gojo, .megumi, .gon, .killua:
+        // Spikes as (angle from straight up toward the facing side, distance from the head center).
+        let spikes: [(CGFloat, CGFloat)]
+        switch look.style {
+        case .tanjiro: spikes = [(-1.9, 36), (-1.4, 38), (-0.9, 37), (-0.4, 36), (0.2, 36), (0.8, 35), (1.4, 35)]
+        case .zenitsu: spikes = [(-2, 38), (-1.5, 40), (-1, 39), (-0.5, 38), (0.1, 37), (0.7, 36), (1.3, 35), (1.8, 34)]
+        case .eren: spikes = [(-2.4, 36), (-1.8, 37), (-1.2, 36), (-0.6, 35), (0, 35), (0.7, 34), (1.4, 34), (2.1, 35)]
+        case .yuji: spikes = [(-1.5, 35), (-1, 37), (-0.5, 38), (0, 37), (0.5, 36), (1, 35)]
+        case .gojo: spikes = [(-1.7, 39), (-1.2, 41), (-0.7, 41), (-0.2, 40), (0.3, 39), (0.8, 37), (1.3, 35)]
+        case .megumi: spikes = [(-2.1, 39), (-1.6, 42), (-1.1, 41), (-0.6, 41), (-0.1, 40), (0.4, 40), (0.9, 39), (1.4, 37), (1.9, 35)]
+        case .gon: spikes = [(-1.6, 39), (-1.1, 43), (-0.6, 45), (-0.15, 45), (0.3, 44), (0.75, 42), (1.2, 38)]
+        default: spikes = [(-2.2, 35), (-1.8, 37), (-1.4, 36), (-1, 38), (-0.6, 37), (-0.2, 38), (0.2, 37), (0.6, 36), (1, 36), (1.4, 35), (1.8, 34)]
+        }
+        ctx.fill({ spikyCap($0, h, spikes) }, look.hairDark)
     case .bob:
         // Chin-length bob curling in under the cheeks.
         ctx.fill({ p in
@@ -338,6 +434,21 @@ func drawHairCap(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
     }
 }
 
+/// A round cap with spikes, going over the top of the head from one cheek to the other.
+func spikyCap(_ p: CGMutablePath, _ h: CGPoint, _ spikes: [(CGFloat, CGFloat)]) {
+    func at(_ angle: CGFloat, _ distance: CGFloat) -> CGPoint {
+        CGPoint(x: h.x + sin(angle) * distance, y: h.y - 3 - cos(angle) * distance)
+    }
+    p.move(to: CGPoint(x: h.x - 30, y: h.y + 14))
+    for (i, (angle, distance)) in spikes.enumerated() {
+        p.addLine(to: at(i == 0 ? angle - 0.25 : (angle + spikes[i - 1].0) / 2, 30))
+        p.addLine(to: at(angle, distance))
+    }
+    p.addLine(to: at(spikes[spikes.count - 1].0 + 0.25, 30))
+    p.addLine(to: CGPoint(x: h.x + 30, y: h.y + 14))
+    p.closeSubpath()
+}
+
 /// Fringe over the forehead. Tips are listed right-to-left relative to the head center.
 func drawBangs(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
     let tips: [(CGFloat, CGFloat)]
@@ -360,6 +471,27 @@ func drawBangs(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
         tips = [(27, 4), (22, -6), (17, -2), (12, -14), (6, -6), (1, -18), (-5, -7), (-11, -15), (-17, -4), (-22, -8), (-27, 4)]
     case .ponytail:
         tips = [(26, 0), (20, -4), (12, -14), (4, -12), (-4, -10), (-12, -6), (-20, 0), (-26, 2)]
+    case .tanjiro:
+        tips = [(27, 2), (21, -6), (15, 0), (9, -12), (3, -4), (-3, -14), (-9, -4), (-15, -11), (-21, -1), (-27, 2)]
+    case .zenitsu, .zoro:
+        tips = [(26, -2), (19, -8), (12, -14), (5, -10), (-2, -16), (-9, -10), (-16, -13), (-22, -4), (-26, 0)]
+    case .luffy:
+        tips = [(26, 0), (20, -6), (14, -2), (8, -12), (2, -5), (-4, -13), (-10, -4), (-16, -10), (-22, -2), (-26, 2)]
+    case .nami:
+        tips = [(26, 4), (20, -2), (13, -10), (5, -14), (-2, -9), (-9, -5), (-16, -8), (-22, 0), (-26, 4)]
+    case .eren:
+        tips = [(27, 8), (21, -4), (15, 2), (9, -10), (3, -2), (-3, -12), (-9, -2), (-15, -8), (-21, 4), (-27, 8)]
+    case .levi:
+        // Parted in the middle, hanging like curtains.
+        tips = [(26, 6), (20, 2), (13, -4), (7, -8), (2, -20), (-1, -20), (-6, -8), (-13, -4), (-20, 2), (-26, 6)]
+    case .yuji, .megumi:
+        tips = [(27, -2), (21, -8), (15, -4), (9, -14), (3, -8), (-3, -16), (-9, -8), (-15, -14), (-21, -4), (-27, 0)]
+    case .gojo:
+        tips = [(27, 0), (21, -6), (15, 2), (9, -6), (3, 4), (-3, -6), (-9, 2), (-15, -6), (-21, 0), (-27, 2)]
+    case .gon:
+        tips = [(26, -4), (20, -10), (13, -16), (6, -12), (0, -20), (-6, -14), (-13, -18), (-20, -10), (-26, -4)]
+    case .killua:
+        tips = [(27, 4), (22, -4), (17, 2), (12, -8), (7, 0), (2, -10), (-3, -1), (-8, -9), (-13, 0), (-18, -7), (-23, 2), (-27, 4)]
     }
     ctx.fill({ p in
         p.move(to: CGPoint(x: h.x - 30, y: h.y + 6))
@@ -370,7 +502,7 @@ func drawBangs(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
     }, look.hair)
 
     // Side locks framing the cheeks.
-    if look.style == .frieren || look.style == .nezuko || look.style == .bocchi {
+    if [.frieren, .nezuko, .bocchi, .nami, .eren].contains(look.style) {
         for side: CGFloat in [-1, 1] {
             ctx.fill({ p in
                 p.move(to: CGPoint(x: h.x + side * 27, y: h.y - 8))
@@ -497,7 +629,9 @@ func drawLeaderHair(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
 func drawAccessories(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
     switch look.style {
     case .bob, .spiky, .buns, .ponytail:
-        break   // agent mascots use `extras` instead
+        break   // agent mascots use `extras` instead (Mikasa and Kurapika need nothing more)
+    case .zenitsu, .nami, .eren, .levi, .megumi, .killua, .gon:
+        break
     case .trumpSwoop, .putinShort, .xiSlick, .kimSide:
         break   // the leaders' hair is all drawn by drawLeaderHair
     case .anya:
@@ -538,6 +672,43 @@ func drawAccessories(_ ctx: CGContext, _ look: Look, _ h: CGPoint) {
             ctx.fill({ $0.addRect(CGRect(x: -3.5, y: -3.5, width: 7, height: 7)) }, color, outlineWidth: 1.2)
             ctx.restoreGState()
         }
+    case .tanjiro:
+        // Hanafuda earrings and the scar on the forehead.
+        for x: CGFloat in [-27, 28] {
+            ctx.stroke({ p in p.move(to: CGPoint(x: h.x + x, y: h.y + 8)); p.addLine(to: CGPoint(x: h.x + x, y: h.y + 11)) }, outline, 1)
+            ctx.fill({ $0.addRect(CGRect(x: h.x + x - 3, y: h.y + 11, width: 6, height: 9)) }, white, outlineWidth: 1)
+            ctx.fillEllipse(CGPoint(x: h.x + x, y: h.y + 14), 1.8, 1.8, rgb(0xD83A3A))
+        }
+        ctx.fillEllipse(CGPoint(x: h.x + 14, y: h.y - 6), 3.5, 2.2, rgb(0xB8444A, 0.8))
+    case .luffy:
+        // Scar under the eye, then the straw hat with its red band.
+        let e = CGPoint(x: h.x + eyeOffsets[1].x, y: h.y + eyeOffsets[1].y + 9)
+        ctx.stroke({ p in
+            p.move(to: CGPoint(x: e.x - 4, y: e.y)); p.addLine(to: CGPoint(x: e.x + 4, y: e.y))
+            for dx: CGFloat in [-2, 0.5, 3] { p.move(to: CGPoint(x: e.x + dx, y: e.y - 1.5)); p.addLine(to: CGPoint(x: e.x + dx, y: e.y + 1.5)) }
+        }, outline, 0.9)
+        let straw = rgb(0xF2CF6A)
+        ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 22, y: h.y - 46, width: 44, height: 30)) }, straw)
+        ctx.fill({ $0.addRect(CGRect(x: h.x - 21.5, y: h.y - 27, width: 43, height: 6)) }, rgb(0xD83A3A), outlineWidth: 1.2)
+        ctx.fill({ $0.addEllipse(in: CGRect(x: h.x - 40, y: h.y - 26, width: 80, height: 13)) }, straw)
+        ctx.stroke({ $0.addEllipse(in: CGRect(x: h.x - 33, y: h.y - 24, width: 66, height: 9)) }, rgb(0xD6A84A), 1)
+    case .zoro:
+        // Three gold earrings on one ear.
+        for y: CGFloat in [6, 10, 14] {
+            ctx.fill({ $0.addEllipse(in: CGRect(x: h.x + 26, y: h.y + y, width: 3.4, height: 3.4)) }, rgb(0xE3B341), outlineWidth: 0.8)
+        }
+    case .yuji:
+        // The marks under his eyes.
+        for o in eyeOffsets {
+            ctx.stroke({ p in
+                p.move(to: CGPoint(x: h.x + o.x - 4, y: h.y + o.y + 8)); p.addLine(to: CGPoint(x: h.x + o.x + 3, y: h.y + o.y + 8))
+            }, rgb(0x6A3A3A), 1.2)
+        }
+    case .gojo:
+        // Blindfold over the eyes; his brows still show above it.
+        guard look.blindfold else { break }
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: h.x - 27, y: h.y - 5, width: 55, height: 14), cornerWidth: 4, cornerHeight: 4) },
+                 rgb(0x1E1E24), outlineWidth: 1.2)
     case .rem:
         // Frilly maid headdress.
         ctx.fill({ p in
@@ -803,6 +974,135 @@ func drawOutfit(_ ctx: CGContext, _ look: Look) {
         if let pin = look.pin {
             ctx.fill({ $0.addEllipse(in: CGRect(x: -9, y: -41, width: 4.4, height: 4.4)) }, pin, outlineWidth: 0.9)
         }
+    case .haori:
+        // Haori over the black Demon Slayer uniform: Tanjiro's checks, Zenitsu's white triangles.
+        ctx.fill(dressPath, look.sleeve)
+        insideDress(ctx) {
+            if look.style == .tanjiro {
+                ctx.setFillColor(look.accent)
+                for row in 0..<6 {
+                    for col in 0..<7 where (row + col) % 2 == 0 {
+                        ctx.fill(CGRect(x: -21 + CGFloat(col) * 6, y: -50 + CGFloat(row) * 6, width: 6, height: 6))
+                    }
+                }
+            } else {
+                for (x, y) in [(-12.0, -24.0), (2.0, -22.0), (10.0, -30.0), (-8.0, -36.0), (6.0, -42.0)] {
+                    ctx.fill({ p in
+                        p.move(to: CGPoint(x: x - 4, y: y + 3)); p.addLine(to: CGPoint(x: x + 4, y: y + 3)); p.addLine(to: CGPoint(x: x, y: y - 4))
+                        p.closeSubpath()
+                    }, look.accent, outlineWidth: 0)
+                }
+            }
+            ctx.setFillColor(rgb(0x1E1E28))
+            ctx.fill(CGRect(x: -4, y: -50, width: 10, height: 40))
+            ctx.setFillColor(white)
+            ctx.fill(CGRect(x: -4, y: -31, width: 10, height: 3))
+        }
+        ctx.stroke({ p in
+            p.move(to: CGPoint(x: -4, y: -48)); p.addLine(to: CGPoint(x: -5, y: -17))
+            p.move(to: CGPoint(x: 6, y: -48)); p.addLine(to: CGPoint(x: 7, y: -17))
+        }, outline, 1)
+    case .vest:
+        // Blue shorts, yellow sash and an open red vest over a bare chest.
+        ctx.fill(dressPath, rgb(0x3B6FB6))
+        insideDress(ctx) {
+            ctx.setFillColor(look.accent)
+            ctx.fill(CGRect(x: -20, y: -50, width: 40, height: 22))
+            ctx.fill({ p in
+                p.move(to: CGPoint(x: -5, y: -50)); p.addLine(to: CGPoint(x: 7, y: -50))
+                p.addLine(to: CGPoint(x: 4, y: -28)); p.addLine(to: CGPoint(x: -2, y: -28)); p.closeSubpath()
+            }, look.skin, outlineWidth: 1)
+            ctx.setFillColor(rgb(0xF2C14E))
+            ctx.fill(CGRect(x: -20, y: -30, width: 40, height: 3))
+            ctx.stroke({ p in
+                p.move(to: CGPoint(x: -1, y: -42)); p.addLine(to: CGPoint(x: 3, y: -36))
+                p.move(to: CGPoint(x: 3, y: -42)); p.addLine(to: CGPoint(x: -1, y: -36))
+            }, rgb(0xC8786A), 0.9)
+        }
+    case .haramaki:
+        // White shirt, green belly band and three swords at the hip.
+        for (i, handle) in [white, rgb(0x1E1E24), rgb(0xB8323A)].enumerated() {
+            let x = -12 - CGFloat(i) * 2.5
+            ctx.stroke({ p in p.move(to: CGPoint(x: x, y: -34)); p.addLine(to: CGPoint(x: x - 12, y: -12)) }, outline, 3.6)
+            ctx.stroke({ p in p.move(to: CGPoint(x: x, y: -34)); p.addLine(to: CGPoint(x: x - 12, y: -12)) }, handle, 2)
+        }
+        ctx.fill(dressPath, look.sleeve)
+        insideDress(ctx) {
+            ctx.setFillColor(look.accent)
+            ctx.fill(CGRect(x: -20, y: -35, width: 40, height: 10))
+            ctx.setFillColor(look.trousers ?? outline)
+            ctx.fill(CGRect(x: -20, y: -25, width: 40, height: 10))
+        }
+        ctx.stroke({ p in p.move(to: CGPoint(x: -4, y: -48)); p.addLine(to: CGPoint(x: 1, y: -40)); p.addLine(to: CGPoint(x: 6, y: -48)) }, look.sleeveDark, 1.4)
+    case .stripes:
+        // Striped top and a denim skirt.
+        ctx.fill(dressPath, rgb(0x4A72B8))
+        insideDress(ctx) {
+            ctx.setFillColor(white)
+            ctx.fill(CGRect(x: -20, y: -48, width: 40, height: 13))
+            ctx.setFillColor(look.accent)
+            for y in stride(from: CGFloat(-46), to: -35, by: 4) { ctx.fill(CGRect(x: -20, y: y, width: 40, height: 2)) }
+            ctx.stroke({ p in p.move(to: CGPoint(x: -20, y: -34)); p.addLine(to: CGPoint(x: 20, y: -34)) }, rgb(0x6A4A2A), 2)
+            ctx.stroke({ p in p.move(to: CGPoint(x: 1, y: -33)); p.addLine(to: CGPoint(x: 1, y: -16)) }, rgb(0x34558E), 1)
+        }
+        ctx.fill({ $0.addRect(CGRect(x: -9, y: -50, width: 19, height: 3)) }, look.skin, outlineWidth: 0)
+    case .surveyCorps:
+        // Short brown jacket over a white shirt, the gear harness, the Wings of Freedom, and any neckwear.
+        ctx.fill(dressPath, look.shirt)
+        insideDress(ctx) {
+            ctx.setFillColor(look.sleeve)
+            ctx.fill(CGRect(x: -20, y: -50, width: 17, height: 17))
+            ctx.fill(CGRect(x: 5, y: -50, width: 15, height: 17))
+            ctx.stroke({ p in
+                p.move(to: CGPoint(x: -20, y: -33)); p.addLine(to: CGPoint(x: -3, y: -33))
+                p.move(to: CGPoint(x: 5, y: -33)); p.addLine(to: CGPoint(x: 20, y: -33))
+            }, outline, 1)
+            ctx.stroke({ p in
+                p.move(to: CGPoint(x: -20, y: -29)); p.addLine(to: CGPoint(x: 20, y: -29))
+                p.move(to: CGPoint(x: -6, y: -29)); p.addLine(to: CGPoint(x: -10, y: -17))
+                p.move(to: CGPoint(x: 8, y: -29)); p.addLine(to: CGPoint(x: 12, y: -17))
+            }, rgb(0x3A2418), 1.6)
+        }
+        ctx.fillEllipse(CGPoint(x: 10, y: -40), 2, 2, rgb(0x46689E))
+        ctx.fillEllipse(CGPoint(x: 9, y: -40), 1.2, 1.6, white)
+        if let neck = look.tie {
+            if look.style == .levi {
+                ctx.fill({ p in
+                    p.move(to: CGPoint(x: -4, y: -48)); p.addLine(to: CGPoint(x: 6, y: -48)); p.addLine(to: CGPoint(x: 1, y: -38)); p.closeSubpath()
+                }, neck, outlineWidth: 1)
+            } else {
+                ctx.fill({ $0.addRoundedRect(in: CGRect(x: -10, y: -51, width: 21, height: 6), cornerWidth: 3, cornerHeight: 3) },
+                         neck, outlineWidth: 1.1)
+                ctx.fill({ $0.addRoundedRect(in: CGRect(x: -12, y: -48, width: 5, height: 14), cornerWidth: 2, cornerHeight: 2) },
+                         neck, outlineWidth: 1.1)
+            }
+        }
+    case .gakuran:
+        // Jujutsu High uniform: a high collar, gold swirl buttons, and a hood when `tie` is set.
+        if let hood = look.tie {
+            ctx.fill({ $0.addRoundedRect(in: CGRect(x: -16, y: -53, width: 16, height: 10), cornerWidth: 5, cornerHeight: 5) },
+                     hood, outlineWidth: 1.2)
+        }
+        ctx.fill(dressPath, look.sleeve)
+        ctx.stroke({ p in p.move(to: CGPoint(x: 1, y: -46)); p.addLine(to: CGPoint(x: 1, y: -17)) }, look.sleeveDark, 1.2)
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: -9, y: -51, width: 20, height: 6), cornerWidth: 2, cornerHeight: 2) },
+                 look.sleeveDark, outlineWidth: 1)
+        for y: CGFloat in [-42, -34, -26] {
+            ctx.fillEllipse(CGPoint(x: 3, y: y), 1.8, 1.8, look.accent)
+        }
+    case .jacket:
+        // Gon's green jacket and shorts over a black top.
+        ctx.fill(dressPath, look.sleeve)
+        insideDress(ctx) {
+            ctx.setFillColor(look.sleeveDark)
+            ctx.fill(CGRect(x: -20, y: -27, width: 40, height: 12))
+            ctx.setFillColor(rgb(0x1E1E24))
+            ctx.fill(CGRect(x: -3, y: -50, width: 8, height: 22))
+        }
+        ctx.stroke({ p in
+            p.move(to: CGPoint(x: -3, y: -48)); p.addLine(to: CGPoint(x: -3, y: -28))
+            p.move(to: CGPoint(x: 5, y: -48)); p.addLine(to: CGPoint(x: 5, y: -28))
+        }, outline, 1)
     case .judogi:
         // White judo jacket wrapped left over right, tied with a black belt.
         ctx.fill({ p in

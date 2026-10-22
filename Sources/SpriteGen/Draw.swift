@@ -326,7 +326,7 @@ func drawOpenEye(_ ctx: CGContext, _ e: CGPoint, look lookX: CGFloat, lid: CGFlo
 let effectNames = ["heart", "note", "anger", "zzz", "dots", "sweat", "exclaim", "sparkle", "code", "check",
                    // Not emotes: props and particles for the special moves.
                    "chest", "flower1", "flower2", "flower3", "flame", "glow", "puff",
-                   "wall", "coin", "boom", "tank", "truck"]
+                   "wall", "coin", "boom", "tank", "truck", "dog", "rabbit"]
 
 func drawEffect(_ ctx: CGContext, _ index: Int) {
     let c = CGPoint(x: 64, y: 64)
@@ -492,6 +492,42 @@ func drawEffect(_ ctx: CGContext, _ index: Int) {
                 p.closeSubpath()
             }, rgb(0xE8423A), outlineWidth: 2.5)
         }
+    case 22: // one of Megumi's Divine Dogs, running toward +x with its feet on the bottom edge
+        let fur = rgb(0xF2F2F6), shade = rgb(0xC9CBD6)
+        for (x, back) in [(30.0, true), (88.0, true), (40.0, false), (98.0, false)] {
+            ctx.stroke({ p in p.move(to: CGPoint(x: x, y: 86)); p.addLine(to: CGPoint(x: x + (back ? -8 : 8), y: 118)) }, outline, 12)
+            ctx.stroke({ p in p.move(to: CGPoint(x: x, y: 86)); p.addLine(to: CGPoint(x: x + (back ? -8 : 8), y: 118)) }, back ? shade : fur, 8)
+        }
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: 18, y: 70)); p.addLine(to: CGPoint(x: 4, y: 52)); p.addLine(to: CGPoint(x: 22, y: 62)); p.closeSubpath()
+        }, fur, outlineWidth: 3)
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: 16, y: 60, width: 86, height: 36), cornerWidth: 18, cornerHeight: 18) }, fur, outlineWidth: 3.5)
+        ctx.fill({ $0.addEllipse(in: CGRect(x: 82, y: 34, width: 40, height: 38)) }, fur, outlineWidth: 3.5)
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: 88, y: 42)); p.addLine(to: CGPoint(x: 92, y: 18)); p.addLine(to: CGPoint(x: 104, y: 38)); p.closeSubpath()
+        }, fur, outlineWidth: 3)
+        ctx.fill({ $0.addRoundedRect(in: CGRect(x: 108, y: 52, width: 18, height: 14), cornerWidth: 6, cornerHeight: 6) }, fur, outlineWidth: 3)
+        ctx.fillEllipse(CGPoint(x: 124, y: 56), 3.5, 3, outline)
+        // Black markings across the eye, like a shikigami's pattern.
+        ctx.fill({ p in
+            p.move(to: CGPoint(x: 96, y: 46)); p.addLine(to: CGPoint(x: 118, y: 44)); p.addLine(to: CGPoint(x: 112, y: 54)); p.closeSubpath()
+        }, rgb(0x2A2A30), outlineWidth: 0)
+        ctx.fillEllipse(CGPoint(x: 110, y: 48), 2.5, 2.5, rgb(0xFFD84D))
+    case 23: // one of Megumi's rabbits, hopping toward +x
+        let fur = white
+        ctx.fill({ $0.addEllipse(in: CGRect(x: 30, y: 74, width: 58, height: 46)) }, fur, outlineWidth: 4)
+        ctx.fill({ $0.addEllipse(in: CGRect(x: 24, y: 82, width: 16, height: 16)) }, fur, outlineWidth: 3.5)
+        ctx.fill({ $0.addEllipse(in: CGRect(x: 70, y: 52, width: 40, height: 38)) }, fur, outlineWidth: 4)
+        for (x, tilt) in [(78.0, -0.3), (92.0, 0.15)] {
+            ctx.saveGState()
+            ctx.translateBy(x: CGFloat(x), y: 56)
+            ctx.rotate(by: CGFloat(tilt))
+            ctx.fill({ $0.addEllipse(in: CGRect(x: -7, y: -44, width: 14, height: 46)) }, fur, outlineWidth: 3.5)
+            ctx.fillEllipse(CGPoint(x: 0, y: -22), 3.5, 14, rgb(0xFFB3C6))
+            ctx.restoreGState()
+        }
+        ctx.fillEllipse(CGPoint(x: 98, y: 68), 4, 4.5, outline)
+        ctx.fillEllipse(CGPoint(x: 108, y: 78), 3, 2.4, rgb(0xFF8FA3))
     default: break
     }
 }

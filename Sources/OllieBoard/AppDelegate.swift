@@ -27,12 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
         menu.addItem(withTitle: "Nhân vật", action: nil, keyEquivalent: "").isEnabled = false
-        for (i, character) in allCharacters.enumerated() {
-            let item = menu.addItem(withTitle: "\(character.name) — \(character.anime)",
-                                    action: #selector(toggleCharacter(_:)), keyEquivalent: "")
-            item.target = self
-            item.tag = i
-            item.state = world.pets[character.id] != nil ? .on : .off
+        for group in characterGroups(#selector(toggleCharacter(_:)), isOn: { self.world.pets[$0.id] != nil }) {
+            menu.addItem(group)
         }
         menu.addItem(withTitle: "    Chuột phải vào nhân vật để dùng kỹ năng đặc biệt", action: nil, keyEquivalent: "").isEnabled = false
         menu.addItem(withTitle: "Phòng chơi", action: nil, keyEquivalent: "").submenu = roomMenu()
@@ -104,19 +100,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let open = menu.addItem(withTitle: "Hiện phòng chơi", action: #selector(toggleRoom), keyEquivalent: "")
         open.target = self
         open.state = room.isOpen ? .on : .off
+        let scenes = NSMenu()
+        for scene in RoomScene.allCases {
+            let item = scenes.addItem(withTitle: scene.title, action: #selector(setRoomScene(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = scene.rawValue
+            item.state = scene == room.scene ? .on : .off
+        }
+        menu.addItem(withTitle: "Phong cảnh", action: nil, keyEquivalent: "").submenu = scenes
         menu.addItem(.separator())
         menu.addItem(withTitle: "Ở trong phòng:", action: nil, keyEquivalent: "").isEnabled = false
-        for (i, character) in allCharacters.enumerated() {
-            let item = menu.addItem(withTitle: character.name, action: #selector(toggleRoomMember(_:)), keyEquivalent: "")
-            item.target = self
-            item.tag = i
-            item.state = room.members.contains(character.id) ? .on : .off
+        for group in characterGroups(#selector(toggleRoomMember(_:)), isOn: { room.members.contains($0.id) }) {
+            menu.addItem(group)
         }
         menu.addItem(.separator())
         let edit = menu.addItem(withTitle: "Chỉnh vị trí và kích thước phòng", action: #selector(toggleRoomEditing), keyEquivalent: "")
         edit.target = self
         edit.state = room.editing ? .on : .off
         return menu
+    }
+
+    /// One submenu per series listing its characters; each item's tag is the character's index in allCharacters.
+    /// A series shows a dash when some of its characters are on.
+    private func characterGroups(_ action: Selector, isOn: (Character) -> Bool) -> [NSMenuItem] {
+        Series.allCases.compactMap { series in
+            let members = allCharacters.enumerated().filter { $0.element.series == series }
+            guard !members.isEmpty else { return nil }
+            let submenu = NSMenu()
+            for (i, character) in members {
+                let item = submenu.addItem(withTitle: character.name, action: action, keyEquivalent: "")
+                item.target = self
+                item.tag = i
+                item.state = isOn(character) ? .on : .off
+            }
+            let group = NSMenuItem(title: series.rawValue, action: nil, keyEquivalent: "")
+            group.submenu = submenu
+            group.state = members.contains { isOn($0.element) } ? .mixed : .off
+            return group
+        }
     }
 
     private func addItem(_ menu: NSMenu, _ title: String, _ action: Selector, key: String = "") {
@@ -153,6 +174,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if inside && world.pets[character.id] == nil {
             world.setEnabled(character, true)
             enabledIDs.insert(character.id)
+        }
+    }
+
+    @objc private func setRoomScene(_ sender: NSMenuItem) {
+        if let raw = sender.representedObject as? String, let scene = RoomScene(rawValue: raw) {
+            world.room.setScene(scene)
         }
     }
 
