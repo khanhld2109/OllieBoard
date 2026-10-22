@@ -19,7 +19,7 @@ The app lives in the menu bar (🐾) only; it has no Dock icon.
 - **Desktop interaction:** characters kick icons across the screen, or line them up in a neat grid in the top-right corner of the main screen.
 - **Play room:** a room drawn on the Desktop, underneath your app windows. Characters placed in it stay on its floor and only play with each other. Pick its scenery: a cozy room, one scene per supported series (a wisteria night, the Thousand Sunny's deck, Wall Maria, Tokyo Jujutsu High, Whale Island), or the UN General Assembly hall for the politicians.
 - **AI agent mascots:** running sessions of Claude Code, Codex, Gemini CLI, OpenCode, Cursor Agent and Aider are detected automatically.
-- **3 dialogue languages:** Vietnamese, English and Japanese.
+- **3 languages:** Vietnamese, English and Japanese, for both the menus and the characters' dialogue.
 
 ## Install
 
@@ -35,7 +35,7 @@ Requirements: macOS 13 or later, Apple Silicon (releases are currently built for
 
 ## Usage
 
-Everything is in the 🐾 menu in the menu bar. The menu labels are in Vietnamese (only the characters' dialogue is localized), so the English meaning is given below.
+Everything is in the 🐾 menu in the menu bar. The menus follow the language picked under **Ngôn ngữ / Language / 言語** (Vietnamese by default); the Vietnamese labels are given below with their meaning.
 
 | Menu item | What it does |
 | --- | --- |

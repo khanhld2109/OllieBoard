@@ -26,12 +26,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // Rebuilt every time it opens so warnings reflect Finder's current state.
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        menu.addItem(withTitle: "Nhân vật", action: nil, keyEquivalent: "").isEnabled = false
+        menu.addItem(withTitle: ui(.characters), action: nil, keyEquivalent: "").isEnabled = false
         for group in characterGroups(#selector(toggleCharacter(_:)), isOn: { self.world.pets[$0.id] != nil }) {
             menu.addItem(group)
         }
-        menu.addItem(withTitle: "    Chuột phải vào nhân vật để dùng kỹ năng đặc biệt", action: nil, keyEquivalent: "").isEnabled = false
-        menu.addItem(withTitle: "Phòng chơi", action: nil, keyEquivalent: "").submenu = roomMenu()
+        menu.addItem(withTitle: "    " + ui(.skillHint), action: nil, keyEquivalent: "").isEnabled = false
+        menu.addItem(withTitle: ui(.playRoom), action: nil, keyEquivalent: "").submenu = roomMenu()
 
         let languageItem = menu.addItem(withTitle: "Ngôn ngữ / Language / 言語", action: nil, keyEquivalent: "")
         let languages = NSMenu()
@@ -44,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         languageItem.submenu = languages
 
         menu.addItem(.separator())
-        let agentsItem = menu.addItem(withTitle: "Nhân vật cho AI agent", action: #selector(toggleAgents), keyEquivalent: "")
+        let agentsItem = menu.addItem(withTitle: ui(.agentCharacters), action: #selector(toggleAgents), keyEquivalent: "")
         agentsItem.target = self
         agentsItem.state = world.agentsEnabled ? .on : .off
         if world.agentsEnabled {
@@ -55,49 +55,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 item.representedObject = kind.rawValue
                 item.state = world.disabledAgentKinds.contains(kind) ? .off : .on
             }
-            menu.addItem(withTitle: "    Chọn agent", action: nil, keyEquivalent: "").submenu = kinds
+            menu.addItem(withTitle: "    " + ui(.chooseAgents), action: nil, keyEquivalent: "").submenu = kinds
             for pet in world.agentPets.values.sorted(by: { ($0.tag ?? "") < ($1.tag ?? "") }) {
                 guard let agent = pet.agent else { continue }
                 let state: String
                 switch agent.state {
-                case .idle: state = "rảnh"
-                case .working: state = "đang làm"
-                case .done: state = "xong, chờ bạn"
-                case .needsInput: state = "cần bạn duyệt"
+                case .idle: state = ui(.agentIdle)
+                case .working: state = ui(.agentWorking)
+                case .done: state = ui(.agentDone)
+                case .needsInput: state = ui(.agentNeedsYou)
                 }
                 menu.addItem(withTitle: "    \(pet.tag ?? agent.kind.title) — \(state)", action: nil, keyEquivalent: "").isEnabled = false
             }
             if ClaudeHooks.isInstalled {
-                menu.addItem(withTitle: "    ✓ Đã cài hook trạng thái cho Claude Code", action: nil, keyEquivalent: "").isEnabled = false
+                menu.addItem(withTitle: "    " + ui(.hookInstalled), action: nil, keyEquivalent: "").isEnabled = false
             } else {
-                addItem(menu, "    Cài hook trạng thái cho Claude Code…", #selector(installClaudeHooks))
+                addItem(menu, "    " + ui(.installHook), #selector(installClaudeHooks))
             }
         }
 
         menu.addItem(.separator())
-        addItem(menu, "Đá một icon ngay", #selector(kickNow))
-        addItem(menu, "Dọn dẹp Desktop", #selector(arrangeNow))
+        addItem(menu, ui(.kickNow), #selector(kickNow))
+        addItem(menu, ui(.tidyDesktop), #selector(arrangeNow))
 
         if let error = world.desktop.lastError {
             menu.addItem(.separator())
-            let warn = menu.addItem(withTitle: "⚠️ Chưa điều khiển được Finder", action: nil, keyEquivalent: "")
+            let warn = menu.addItem(withTitle: ui(.finderBlocked), action: nil, keyEquivalent: "")
             warn.toolTip = error
             warn.isEnabled = false
-            addItem(menu, "Mở cài đặt quyền Automation…", #selector(openAutomationSettings))
+            addItem(menu, ui(.openAutomation), #selector(openAutomationSettings))
         } else if world.desktop.iconsArePinned {
             menu.addItem(.separator())
-            menu.addItem(withTitle: "⚠️ Desktop đang bật Sort By — icon bị khoá", action: nil, keyEquivalent: "").isEnabled = false
-            addItem(menu, "Tắt Sort By trên Desktop", #selector(disableAutoArrange))
+            menu.addItem(withTitle: ui(.sortByLocked), action: nil, keyEquivalent: "").isEnabled = false
+            addItem(menu, ui(.turnOffSortBy), #selector(disableAutoArrange))
         }
 
         menu.addItem(.separator())
-        addItem(menu, "Thoát OllieBoard", #selector(quit), key: "q")
+        addItem(menu, ui(.quit), #selector(quit), key: "q")
     }
 
     private func roomMenu() -> NSMenu {
         let room = world.room
         let menu = NSMenu()
-        let open = menu.addItem(withTitle: "Hiện phòng chơi", action: #selector(toggleRoom), keyEquivalent: "")
+        let open = menu.addItem(withTitle: ui(.showRoom), action: #selector(toggleRoom), keyEquivalent: "")
         open.target = self
         open.state = room.isOpen ? .on : .off
         let scenes = NSMenu()
@@ -107,14 +107,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item.representedObject = scene.rawValue
             item.state = scene == room.scene ? .on : .off
         }
-        menu.addItem(withTitle: "Phong cảnh", action: nil, keyEquivalent: "").submenu = scenes
+        menu.addItem(withTitle: ui(.scenery), action: nil, keyEquivalent: "").submenu = scenes
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Ở trong phòng:", action: nil, keyEquivalent: "").isEnabled = false
+        menu.addItem(withTitle: ui(.inRoom), action: nil, keyEquivalent: "").isEnabled = false
         for group in characterGroups(#selector(toggleRoomMember(_:)), isOn: { room.members.contains($0.id) }) {
             menu.addItem(group)
         }
         menu.addItem(.separator())
-        let edit = menu.addItem(withTitle: "Chỉnh vị trí và kích thước phòng", action: #selector(toggleRoomEditing), keyEquivalent: "")
+        let edit = menu.addItem(withTitle: ui(.editRoom), action: #selector(toggleRoomEditing), keyEquivalent: "")
         edit.target = self
         edit.state = room.editing ? .on : .off
         return menu
@@ -138,7 +138,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 row.addSubview(box)
                 submenu.addItem(withTitle: character.name, action: nil, keyEquivalent: "").view = row
             }
-            let group = NSMenuItem(title: series.rawValue, action: nil, keyEquivalent: "")
+            let group = NSMenuItem(title: series.title, action: nil, keyEquivalent: "")
             group.submenu = submenu
             group.state = members.contains { isOn($0.element) } ? .mixed : .off
             return group
@@ -202,22 +202,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func installClaudeHooks() {
         NSApp.activate(ignoringOtherApps: true)
         let confirm = NSAlert()
-        confirm.messageText = "Cài hook trạng thái cho Claude Code?"
-        confirm.informativeText = """
-        OllieBoard sẽ thêm hook vào \(ClaudeHooks.settings.path) để biết chính xác khi nào Claude Code đang làm, \
-        đã xong hay cần bạn duyệt. Các hook hiện có được giữ nguyên; bản cũ được sao lưu thành settings.json.ollieboard-backup.
-        """
-        confirm.addButton(withTitle: "Cài đặt")
-        confirm.addButton(withTitle: "Huỷ")
+        confirm.messageText = ui(.hookQuestion)
+        confirm.informativeText = ui(.hookExplain, ClaudeHooks.settings.path)
+        confirm.addButton(withTitle: ui(.install))
+        confirm.addButton(withTitle: ui(.cancel))
         guard confirm.runModal() == .alertFirstButtonReturn else { return }
         let result = NSAlert()
         do {
             try ClaudeHooks.install()
-            result.messageText = "Đã cài hook"
-            result.informativeText = "Áp dụng cho các phiên Claude Code mở từ bây giờ (phiên đang chạy cần khởi động lại)."
+            result.messageText = ui(.hookDone)
+            result.informativeText = ui(.hookDoneInfo)
         } catch {
             result.alertStyle = .warning
-            result.messageText = "Không cài được hook"
+            result.messageText = ui(.hookFailed)
             result.informativeText = error.localizedDescription
         }
         result.runModal()

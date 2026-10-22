@@ -45,6 +45,9 @@ enum Series: String, CaseIterable {
     case bocchi = "Bocchi the Rock!"
     case reZero = "Re:Zero"
     case politics = "Chính trị"
+
+    /// Series names stay as they are; only "politics" is translated.
+    var title: String { self == .politics ? ui(.politics) : rawValue }
 }
 
 /// Personality only; what each character says lives in the Dialogue+<Language> files.

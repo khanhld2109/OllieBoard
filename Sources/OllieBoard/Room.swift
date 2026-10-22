@@ -6,13 +6,13 @@ enum RoomScene: String, CaseIterable {
 
     var title: String {
         switch self {
-        case .cozy: return "Phòng ấm cúng (mặc định)"
-        case .kimetsu: return "Kimetsu no Yaiba — Đêm hoa tử đằng"
-        case .onePiece: return "One Piece — Boong tàu Thousand Sunny"
-        case .attackOnTitan: return "Attack on Titan — Tường Maria"
-        case .jujutsuKaisen: return "Jujutsu Kaisen — Trường Chú thuật Tokyo"
-        case .hunterXHunter: return "Hunter x Hunter — Đảo Cá Voi"
-        case .unitedNations: return "Chính trị — Phòng họp Liên Hợp Quốc"
+        case .cozy: return ui(.sceneCozy)
+        case .kimetsu: return ui(.sceneKimetsu)
+        case .onePiece: return ui(.sceneOnePiece)
+        case .attackOnTitan: return ui(.sceneAttackOnTitan)
+        case .jujutsuKaisen: return ui(.sceneJujutsuKaisen)
+        case .hunterXHunter: return ui(.sceneHunterXHunter)
+        case .unitedNations: return ui(.sceneUnitedNations)
         }
     }
 }
@@ -146,7 +146,7 @@ final class Room {
 
 /// Paints the room's scene (see RoomScenes.swift); the cozy default is a striped wall with a window and a clock,
 /// wooden floor and a rug.
-/// While editing it can be dragged around, resized from the bottom-right corner and closed with "Xong".
+/// While editing it can be dragged around, resized from the bottom-right corner and closed with its done button.
 final class RoomView: NSView {
     weak var room: Room?
 
@@ -269,12 +269,12 @@ final class RoomView: NSView {
 
         accent.setFill()
         NSBezierPath(roundedRect: doneRect, xRadius: 7, yRadius: 7).fill()
-        let done = NSAttributedString(string: "Xong", attributes: [
+        let done = NSAttributedString(string: ui(.done), attributes: [
             .font: NSFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: NSColor.white,
         ])
         done.draw(at: CGPoint(x: doneRect.midX - done.size().width / 2, y: doneRect.midY - done.size().height / 2))
 
-        let hint = NSAttributedString(string: "Kéo để di chuyển · kéo góc ↘ để đổi kích thước", attributes: [
+        let hint = NSAttributedString(string: ui(.roomHint), attributes: [
             .font: NSFont.systemFont(ofSize: 11, weight: .medium), .foregroundColor: NSColor.white,
         ])
         let size = hint.size()
