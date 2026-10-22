@@ -42,7 +42,7 @@ func drawAnimeSkill(_ ctx: CGContext, _ look: Look, _ which: Int, _ i: Int) {
 // MARK: - Shared props
 
 /// A sword held at `grip`, pointing along `angle` (the limbs' convention: 0 is straight down, π/2 is forward).
-private func drawSword(_ ctx: CGContext, grip: CGPoint, angle: CGFloat, length: CGFloat = 32,
+func drawSword(_ ctx: CGContext, grip: CGPoint, angle: CGFloat, length: CGFloat = 32,
                        blade: CGColor = rgb(0xD8E2EA), hilt: CGColor = rgb(0x2A2A30)) {
     let d = CGPoint(x: sin(angle), y: cos(angle)), n = CGPoint(x: -cos(angle), y: sin(angle))
     let pommel = CGPoint(x: grip.x - d.x * 5, y: grip.y - d.y * 5)
@@ -773,7 +773,9 @@ private func kurapikaScarlet(_ ctx: CGContext, _ look: Look, _ i: Int) {
 
 // MARK: - Cat Knight: the knight's oath and the shield bash
 
-private func catKnightOath(_ ctx: CGContext, _ look: Look, _ i: Int) {
+private func catKnightOath(_ ctx: CGContext, _ base: Look, _ i: Int) {
+    var look = base
+    look.sword = false
     // Sword held upright before her face (as in the reference), then brought down in a cut.
     let sword: [CGFloat] = [.pi, .pi, .pi, .pi, 2.3, 1.6, 1.25, 1.2]
     var p = Pose()
@@ -797,7 +799,9 @@ private func catKnightOath(_ ctx: CGContext, _ look: Look, _ i: Int) {
     }
 }
 
-private func catKnightShield(_ ctx: CGContext, _ look: Look, _ i: Int) {
+private func catKnightShield(_ ctx: CGContext, _ base: Look, _ i: Int) {
+    var look = base
+    look.sword = false
     // Shoving a shield bigger than herself, with a bash on frames 3 and 4.
     let push: [CGFloat] = [0, 1, 3, 8, 8, 4, 2, 0]
     var p = Pose()
