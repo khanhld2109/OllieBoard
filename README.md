@@ -43,7 +43,7 @@ Everything is in the 🐾 menu in the menu bar. The menus follow the language pi
 | --- | --- |
 | Nhân vật (Characters) | One submenu per series (plus Chính trị, politics); turn each character on or off. Only Nezuko is on by default. |
 | Phòng chơi (Play room) | Show the room, pick its scenery (Phong cảnh), choose who is inside it, and move or resize it. |
-| Nhân vật nghịch trình duyệt (Characters play with the browser) | Turns the browser antics on or off. Needs the Accessibility permission (System Settings → Privacy & Security → Accessibility). |
+| Nhân vật nghịch trình duyệt (Characters play with the browser) | Submenu: turn the browser antics on or off, and choose whether they edit the real page (DOM). Needs the Accessibility permission (System Settings → Privacy & Security → Accessibility). |
 | Ngôn ngữ / Language / 言語 | Change the dialogue language. |
 | Nhân vật cho AI agent (Characters for AI agents) | Turn agent mascots on or off, pick which agents, install the Claude Code hook. |
 | Kiểm tra cập nhật / ⬆️ Cập nhật lên bản … (Check for updates / Update to …) | See [Updates](#updates). |

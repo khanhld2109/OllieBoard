@@ -5,7 +5,7 @@ enum UIText {
     case characters, playRoom, agentCharacters, chooseAgents
     case agentIdle, agentWorking, agentDone, agentNeedsYou
     case hookInstalled, installHook
-    case browserInteraction, browserNeedsAccess, openAccessibility, editPage, editPageBlocked
+    case browserInteraction, browserNeedsAccess, openAccessibility, editPage, editPageBlocked, enable
     case finderBlocked, openAutomation, sortByLocked, turnOffSortBy, quit
     case showRoom, scenery, inRoom, editRoom, done, roomHint, politics
     case sceneCozy, sceneKimetsu, sceneOnePiece, sceneAttackOnTitan, sceneJujutsuKaisen, sceneHunterXHunter, sceneUnitedNations
@@ -41,6 +41,7 @@ private let uiTexts: [Language: [UIText: String]] = [
         .browserInteraction: "Nhân vật nghịch trình duyệt",
         .browserNeedsAccess: "⚠️ Cần quyền Accessibility để đọc nội dung trang",
         .openAccessibility: "Mở cài đặt quyền Accessibility…",
+        .enable: "Bật",
         .editPage: "Sửa trang thật (DOM) bằng JavaScript",
         .editPageBlocked: "⚠️ Không chạy được JavaScript — bật “Allow JavaScript from Apple Events” trong trình duyệt và cho phép Automation",
         .finderBlocked: "⚠️ Chưa điều khiển được Finder",
@@ -95,6 +96,7 @@ private let uiTexts: [Language: [UIText: String]] = [
         .browserInteraction: "Characters play with the browser",
         .browserNeedsAccess: "⚠️ Accessibility permission needed to read the page",
         .openAccessibility: "Open Accessibility settings…",
+        .enable: "Turn on",
         .editPage: "Edit the real page (DOM) with JavaScript",
         .editPageBlocked: "⚠️ Can't run JavaScript — turn on “Allow JavaScript from Apple Events” in the browser and allow Automation",
         .finderBlocked: "⚠️ Can't control Finder",
@@ -149,6 +151,7 @@ private let uiTexts: [Language: [UIText: String]] = [
         .browserInteraction: "キャラがブラウザで遊ぶ",
         .browserNeedsAccess: "⚠️ ページを読み取るにはアクセシビリティの許可が必要です",
         .openAccessibility: "アクセシビリティの設定を開く…",
+        .enable: "オンにする",
         .editPage: "実際のページ（DOM）をJavaScriptで書き換える",
         .editPageBlocked: "⚠️ JavaScriptを実行できません — ブラウザで「Apple EventsからのJavaScriptを許可」をオンにし、オートメーションを許可してください",
         .finderBlocked: "⚠️ Finder を操作できません",
