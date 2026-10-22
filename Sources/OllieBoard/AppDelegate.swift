@@ -120,18 +120,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return menu
     }
 
-    /// One submenu per series listing its characters; each item's tag is the character's index in allCharacters.
+    /// One submenu per series listing its characters as checkboxes, so several can be toggled without the menu
+    /// closing; each checkbox's tag is the character's index in allCharacters.
     /// A series shows a dash when some of its characters are on.
     private func characterGroups(_ action: Selector, isOn: (Character) -> Bool) -> [NSMenuItem] {
-        Series.allCases.compactMap { series in
+        Series.allCases.compactMap { series -> NSMenuItem? in
             let members = allCharacters.enumerated().filter { $0.element.series == series }
             guard !members.isEmpty else { return nil }
             let submenu = NSMenu()
             for (i, character) in members {
-                let item = submenu.addItem(withTitle: character.name, action: action, keyEquivalent: "")
-                item.target = self
-                item.tag = i
-                item.state = isOn(character) ? .on : .off
+                let box = NSButton(checkboxWithTitle: character.name, target: self, action: action)
+                box.tag = i
+                box.state = isOn(character) ? .on : .off
+                box.sizeToFit()
+                let row = NSView(frame: CGRect(x: 0, y: 0, width: box.frame.width + 28, height: box.frame.height + 6))
+                box.setFrameOrigin(CGPoint(x: 14, y: 3))
+                row.addSubview(box)
+                submenu.addItem(withTitle: character.name, action: nil, keyEquivalent: "").view = row
             }
             let group = NSMenuItem(title: series.rawValue, action: nil, keyEquivalent: "")
             group.submenu = submenu
@@ -140,15 +145,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    /// Updates a series' dash after one of its checkboxes was clicked (the menu stays open).
+    private func refreshGroup(of box: NSButton) {
+        guard let group = box.enclosingMenuItem?.parent else { return }
+        let anyOn = group.submenu?.items.contains { ($0.view?.subviews.first as? NSButton)?.state == .on } ?? false
+        group.state = anyOn ? .mixed : .off
+    }
+
     private func addItem(_ menu: NSMenu, _ title: String, _ action: Selector, key: String = "") {
         menu.addItem(withTitle: title, action: action, keyEquivalent: key).target = self
     }
 
-    @objc private func toggleCharacter(_ sender: NSMenuItem) {
+    @objc private func toggleCharacter(_ sender: NSButton) {
         let character = allCharacters[sender.tag]
         let enable = world.pets[character.id] == nil
         world.setEnabled(character, enable)
         if enable { enabledIDs.insert(character.id) } else { enabledIDs.remove(character.id) }
+        refreshGroup(of: sender)
     }
 
     @objc private func setLanguage(_ sender: NSMenuItem) {
@@ -167,7 +180,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func toggleRoom() { world.room.setOpen(!world.room.isOpen) }
 
     /// Putting a character in the room also brings it out if it was turned off.
-    @objc private func toggleRoomMember(_ sender: NSMenuItem) {
+    @objc private func toggleRoomMember(_ sender: NSButton) {
         let character = allCharacters[sender.tag]
         let inside = !world.room.members.contains(character.id)
         world.room.setMember(character.id, inside)
@@ -175,6 +188,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             world.setEnabled(character, true)
             enabledIDs.insert(character.id)
         }
+        refreshGroup(of: sender)
     }
 
     @objc private func setRoomScene(_ sender: NSMenuItem) {
