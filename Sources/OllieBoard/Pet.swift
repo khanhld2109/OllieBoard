@@ -30,6 +30,7 @@ final class Pet {
     private unowned let world: World
     private let view: PetView
     private lazy var window = PetWindow(view: view)
+    private var edgeMirror: PetEdgeMirror?
 
     private(set) var position: CGPoint
     private(set) var facing: CGFloat = 1
@@ -99,6 +100,7 @@ final class Pet {
         if let name = carrying { drop(name, at: carryPoint) }
         if world.arranger === self { world.arranger = nil }
         window.orderOut(nil)
+        edgeMirror?.orderOut(nil)
     }
 
     // MARK: - Rendering state
@@ -159,6 +161,15 @@ final class Pet {
         let bubble = currentBubble()
         view.render(frame: currentFrame(), facing: facing, scale: scale, effect: fx.flatMap { SpriteSheet.effect($0.0) },
                     effectAge: fx?.1 ?? 0, bubble: bubble?.text, thought: bubble?.thought ?? false, tag: tag)
+        mirrorOverhang()
+    }
+
+    /// Draws the part of the pet that lies on a second screen (see PetWindow).
+    private func mirrorOverhang() {
+        guard let screen = window.overhangScreen else { edgeMirror?.orderOut(nil); return }
+        let mirror = edgeMirror ?? PetEdgeMirror()
+        edgeMirror = mirror
+        mirror.show(copying: view, windowFrame: window.fullFrame, on: screen, level: window.level)
     }
 
     private func advance(_ dt: TimeInterval) {
@@ -476,6 +487,7 @@ final class Pet {
         bubble = nil
         effect = nil
         window.orderOut(nil)
+        edgeMirror?.orderOut(nil)
     }
 
     /// Runs over to the mouse cursor to say the agent finished or needs the user.
@@ -851,7 +863,7 @@ final class Pet {
 
     private func updateMousePassthrough() {
         let m = NSEvent.mouseLocation
-        let local = CGPoint(x: m.x - window.frame.minX, y: m.y - window.frame.minY)
+        let local = CGPoint(x: m.x - window.fullFrame.minX, y: m.y - window.fullFrame.minY)
         let over = dragging || view.bodyRect.contains(local)
         if window.ignoresMouseEvents == over { window.ignoresMouseEvents = !over }
     }

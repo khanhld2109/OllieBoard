@@ -1,12 +1,21 @@
 import AppKit
 
 /// Small transparent, click-through panel that follows a pet around every screen.
+/// Never straddles two screens: the window server flickers a window that does, so a pet on the seam is cut into
+/// one window per screen (this one holds the larger part, `PetEdgeMirror` the rest).
 final class PetWindow: NSPanel {
     static let size = CGSize(width: 240, height: 194)
     /// Where the pet's feet sit inside the window (bottom-left origin); room below is for the name tag.
     static let feet = CGPoint(x: 120, y: 22)
 
+    /// The frame the window would have if it were never cut: what the pet's own coordinates refer to.
+    private(set) var fullFrame = CGRect(origin: .zero, size: PetWindow.size)
+    /// The screen holding the smaller part of a pet on the seam, nil when the pet is on one screen.
+    private(set) var overhangScreen: NSScreen?
+    private let petView: NSView
+
     init(view: NSView) {
+        petView = view
         super.init(contentRect: CGRect(origin: .zero, size: Self.size),
                    styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false
@@ -15,7 +24,9 @@ final class PetWindow: NSPanel {
         level = .floating
         hidesOnDeactivate = false
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
-        contentView = view
+        let content = NSView(frame: CGRect(origin: .zero, size: Self.size))
+        content.addSubview(view)
+        contentView = content
     }
 
     override var canBecomeKey: Bool { false }
@@ -24,8 +35,58 @@ final class PetWindow: NSPanel {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 
     func place(feetAt p: CGPoint) {
-        let origin = CGPoint(x: (p.x - Self.feet.x).rounded(), y: (p.y - Self.feet.y).rounded())
-        if origin != frame.origin { setFrameOrigin(origin) }
+        let full = CGRect(origin: CGPoint(x: (p.x - Self.feet.x).rounded(), y: (p.y - Self.feet.y).rounded()), size: Self.size)
+        var slices: [(screen: NSScreen, part: CGRect)] = []
+        for screen in NSScreen.screens {
+            let part = screen.frame.intersection(full)
+            if part.width > 0 && part.height > 0 { slices.append((screen, part)) }
+        }
+        slices.sort { $0.part.width * $0.part.height > $1.part.width * $1.part.height }
+        let mine = slices.count > 1 ? slices[0].part : full
+        overhangScreen = slices.count > 1 ? slices[1].screen : nil
+        fullFrame = full
+        if mine != frame { setFrame(mine, display: false) }
+        let offset = CGPoint(x: full.minX - mine.minX, y: full.minY - mine.minY)
+        if petView.frame.origin != offset { petView.setFrameOrigin(offset) }
+    }
+}
+
+/// Shows the part of a pet that hangs over onto a second screen. A window is only drawn on the screen it mostly
+/// sits on, so a pet crossing the seam would be cut off and then jump; this window sits entirely on the other
+/// screen and displays that part from a snapshot of the pet's own view.
+final class PetEdgeMirror: NSPanel {
+    init() {
+        super.init(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        isOpaque = false
+        backgroundColor = .clear
+        hasShadow = false
+        hidesOnDeactivate = false
+        ignoresMouseEvents = true
+        collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
+        let content = NSView()
+        content.wantsLayer = true
+        content.layer?.contentsGravity = .resize
+        contentView = content
+    }
+
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
+
+    /// `windowFrame` is the pet window's frame; only its overlap with `screen` is shown.
+    func show(copying view: PetView, windowFrame: CGRect, on screen: NSScreen, level: NSWindow.Level) {
+        let part = windowFrame.intersection(screen.frame)
+        setFrame(part, display: false)
+        self.level = level
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        contentView?.layer?.contents = view.snapshot(scale: screen.backingScaleFactor)
+        contentView?.layer?.contentsRect = CGRect(x: (part.minX - windowFrame.minX) / windowFrame.width,
+                                                  y: (part.minY - windowFrame.minY) / windowFrame.height,
+                                                  width: part.width / windowFrame.width,
+                                                  height: part.height / windowFrame.height)
+        CATransaction.commit()
+        orderFrontRegardless()
     }
 }
 
@@ -110,6 +171,17 @@ final class PetView: NSView {
         shownScale = scale
         shownEffect = effect
         shownRise = rise
+    }
+
+    /// What the pet looks like right now, drawn from the layer tree (animations still in flight are not included).
+    func snapshot(scale: CGFloat) -> CGImage? {
+        guard let ctx = CGContext(data: nil, width: Int(bounds.width * scale), height: Int(bounds.height * scale),
+                                  bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
+        else { return nil }
+        ctx.scaleBy(x: scale, y: scale)
+        layer?.render(in: ctx)
+        return ctx.makeImage()
     }
 
     /// Bubble and name tag rendered once into a bitmap at the screen's scale.
