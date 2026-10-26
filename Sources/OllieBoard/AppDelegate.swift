@@ -45,22 +45,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for group in characterGroups(#selector(toggleCharacter(_:)), isOn: { self.world.pets[$0.id] != nil }) {
             menu.addItem(group)
         }
-        menu.addItem(withTitle: ui(.playRoom), action: nil, keyEquivalent: "").submenu = roomMenu()
 
         menu.addItem(.separator())
+        menu.addItem(withTitle: ui(.playRoom), action: nil, keyEquivalent: "").submenu = roomMenu()
         menu.addItem(withTitle: ui(.browserInteraction), action: nil, keyEquivalent: "").submenu = browserMenu()
         menu.addItem(withTitle: ui(.agentCharacters), action: nil, keyEquivalent: "").submenu = agentsMenu()
 
-        menu.addItem(.separator())
         if let error = world.desktop.lastError {
+            menu.addItem(.separator())
             let warn = menu.addItem(withTitle: ui(.finderBlocked), action: nil, keyEquivalent: "")
             warn.toolTip = error
             warn.isEnabled = false
             addItem(menu, ui(.openAutomation), #selector(openAutomationSettings))
         } else if world.desktop.iconsArePinned {
+            menu.addItem(.separator())
             menu.addItem(withTitle: ui(.sortByLocked), action: nil, keyEquivalent: "").isEnabled = false
             addItem(menu, ui(.turnOffSortBy), #selector(disableAutoArrange))
         }
+
+        menu.addItem(.separator())
         let languageItem = menu.addItem(withTitle: "Ngôn ngữ / Language / 言語", action: nil, keyEquivalent: "")
         let languages = NSMenu()
         for language in Language.allCases {
@@ -70,9 +73,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item.state = language == Language.current ? .on : .off
         }
         languageItem.submenu = languages
+        if Updater.canUpdate { addUpdateItem(menu) }
 
         menu.addItem(.separator())
-        if Updater.canUpdate { addUpdateItem(menu) }
         addItem(menu, ui(.quit), #selector(quit), key: "q")
     }
 
