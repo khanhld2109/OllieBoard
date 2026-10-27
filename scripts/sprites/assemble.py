@@ -7,12 +7,13 @@
 Writes build/sprites/<id>/<id>.png (2048x4096: 8 columns x 16 rows of 256px cells, feet at (128,244)) and <id>-preview.png.
 Each raw strip is checked first (see check_strip): a strip that is the wrong image, an unfinished grey placeholder, heavily
 ghosted, too small or a copy of another row is rejected, left empty in the sheet and listed with the gen_prompts.py command
-that redoes it. A contact sheet of all raw strips with their verdicts is written to raw-contact.png. --keep-bad uses them anyway.
+that redoes it. A contact sheet of all raw strips with their verdicts is written to raw-contact.png. --keep-bad is preview-only.
 It removes the magenta background and Gemini's corner watermark, paints over its faint cell borders, cuts each strip
 into frames, brightens the skin and pulls the honey-yellow out of it (--skin), resamples to the expected frame count and swaps clearly broken frames for the nearest good one.
 Needs: pip install -r scripts/sprites/requirements.txt
 """
 import argparse, glob, os, re, shutil, sys
+from pathlib import Path
 import numpy as np
 from PIL import Image
 from gen_prompts import CHARACTERS
@@ -236,7 +237,7 @@ def repair(frames):
     return out, [i for i, b in enumerate(bad) if b]
 
 def write_contact(path, strips, verdict):
-    """One picture of every raw strip, labelled, so a person (or Claude) can eyeball them all at once."""
+    """One picture of every raw strip, labelled, for visual inspection."""
     from PIL import ImageDraw
     W, rows = 1400, []
     for r in sorted(strips):
@@ -259,23 +260,35 @@ def main():
                     help="brighten the skin and take the honey-yellow out of it: 0 = off, 1 = exactly the game's skin tone (default %(default)s)")
     ap.add_argument("--install", action="store_true", help="copy the sheet into Sources/OllieBoard/Resources/Sprites/")
     o = ap.parse_args()
+    if o.id not in CHARACTERS or not re.fullmatch(r"[a-z0-9]+", o.id):
+        ap.error("id must be a known character from gen_prompts.py")
+    if not 0 <= o.skin <= 1:
+        ap.error("--skin must be between 0 and 1")
+    if o.install and o.keep_bad:
+        ap.error("--keep-bad is preview-only and cannot be combined with --install")
     repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     src = os.path.expanduser(o.src or os.path.join(repo, "build", "sprites", o.id, "raw"))
     out = os.path.join(repo, "build", "sprites", o.id)
     os.makedirs(out, exist_ok=True)
+    has_skills = CHARACTERS[o.id][2] is not None
+    required_rows = ROWS if has_skills else ROWS[:14]
     strips = {}                                   # row -> newest file for that row (a re-download wins over an older one)
     for f in sorted(glob.glob(os.path.join(src, "*")), key=os.path.getmtime):
-        m = re.search(r"row(\d+)", os.path.basename(f))
-        if m and f.lower().endswith((".png", ".jpg", ".jpeg", ".webp")): strips[int(m.group(1))] = f
+        m = re.fullmatch(re.escape(o.id) + r"_row(\d+)_(.+)\.(?:png|jpg|jpeg|webp)", os.path.basename(f), re.IGNORECASE)
+        if m and os.path.isfile(f):
+            r = int(m.group(1))
+            if r < len(required_rows) and m.group(2) == ROWS[r][0]:
+                strips[r] = f
     if not strips: sys.exit(f"no row images found in {src}")
-    ap_rows = ROWS
     verdict, sigs = {}, {}
     for r, path in strips.items():
         if r >= len(ROWS): continue
         im = Image.open(path)
         keyed = key_out(im)
-        found = split(keyed, ROWS[r][1])[2]
+        _, how, found = split(keyed, ROWS[r][1])
         verdict[r] = check_strip(im, keyed, ROWS[r][1], found)
+        if r >= 14 and (found != ROWS[r][1] or how != "gaps"):
+            verdict[r][0].append("skill timing requires exactly 8 separated frames; regenerate this row")
         sigs[r] = signature(im)
     for r in sorted(sigs):
         for q in sorted(sigs):
@@ -306,16 +319,23 @@ def main():
                   f"-> game #{int(dr[0]):02X}{int(dr[1]):02X}{int(dr[2]):02X}, strength {o.skin}")
     sheet = Image.new("RGBA", (COLS*CELL, len(ROWS)*CELL), (0, 0, 0, 0))
     # Agent mascots have no special moves, so the app never reads rows 14-15 for them.
-    has_skills = CHARACTERS.get(o.id, (None, None, True, True))[2] is not None
     missing = []
-    for r, (name, n) in enumerate(ROWS if has_skills else ROWS[:14]):
+    for r, (name, n) in enumerate(required_rows):
         if r not in strips: print(f"row {r:2d} {name}: MISSING"); missing.append(r); continue
         if r in rejected and not o.keep_bad: missing.append(r); continue
         keyed = key_out(Image.open(strips[r]))
         if skin_src is not None: keyed = grade_skin(keyed, skin_src, skin_dst, o.skin)
         frames, how, found = split(keyed, n)
         frames, replaced = repair(frames)
+        if replaced and (r >= 14 or len(replaced) == n):
+            print(f"row {r:2d} {name}: unusable frames {replaced}; regenerate this row")
+            missing.append(r)
+            continue
         boxes = [bbox(f) for f in frames]
+        if any(b is None for b in boxes):
+            print(f"row {r:2d} {name}: empty frames; regenerate this row")
+            missing.append(r)
+            continue
         heights = sorted(b[3] - b[1] for b in boxes if b)
         if not heights: print(f"row {r:2d} {name}: no character found"); missing.append(r); continue
         # One scale per row, so the character has the same size in every animation whatever size Gemini drew it.
@@ -346,14 +366,19 @@ def main():
         if missing:
             sys.exit(f"not installed: rows {missing} are empty, the character would vanish in those animations. Generate them first.")
         sprites = os.path.join(repo, "Sources", "OllieBoard", "Resources", "Sprites")
+        generator = Path(repo) / "Sources" / "SpriteGen" / "main.swift"
+        if not generator.is_file() or "custom-sheets.txt" not in generator.read_text():
+            sys.exit("not installed: SpriteGen must support custom-sheets.txt first")
         dest = os.path.join(sprites, f"{o.id}.png")
         shutil.copyfile(sheet_path, dest); print("installed", dest)
         # SpriteGen (make sprites / make app) would redraw this sheet from code; listing it here makes SpriteGen leave it alone.
         listing = os.path.join(sprites, "custom-sheets.txt")
-        ids = open(listing).read().split() if os.path.exists(listing) else []
+        existing = Path(listing).read_text() if os.path.exists(listing) else ""
+        ids = {line.strip() for line in existing.splitlines() if line.strip() and not line.lstrip().startswith("#")}
         if o.id not in ids:
             with open(listing, "a") as fh:
-                if not ids: fh.write("# Sheets not drawn by SpriteGen (AI-made, see scripts/sprites). SpriteGen leaves these ids alone.\n")
+                if not existing: fh.write("# Sheets not drawn by SpriteGen (AI-made, see scripts/sprites). SpriteGen leaves these ids alone.\n")
+                elif not existing.endswith("\n"): fh.write("\n")
                 fh.write(o.id + "\n")
             print(f"added {o.id} to {listing}")
 

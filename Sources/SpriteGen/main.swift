@@ -179,9 +179,13 @@ func renderSheet(_ name: String, columns: Int, rows: Int, draw: (CGContext, _ co
     try rep.representation(using: .png, properties: [:])!.write(to: outDir.appendingPathComponent("\(name).png"))
 }
 
-// Sheets drawn elsewhere (e.g. AI-made, see scripts/sprites) are listed one id per line in custom-sheets.txt and left untouched.
-let customSheets = Set(((try? String(contentsOf: outDir.appendingPathComponent("custom-sheets.txt"), encoding: .utf8)) ?? "")
-    .split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty && !$0.hasPrefix("#") })
+// Preserve sheets installed by scripts/sprites/assemble.py.
+let customSheetsURL = outDir.appendingPathComponent("custom-sheets.txt")
+let customSheetsText = FileManager.default.fileExists(atPath: customSheetsURL.path)
+    ? try String(contentsOf: customSheetsURL, encoding: .utf8) : ""
+let customSheets = Set(customSheetsText.split(whereSeparator: \.isNewline)
+    .map { $0.trimmingCharacters(in: .whitespaces) }
+    .filter { !$0.isEmpty && !$0.hasPrefix("#") })
 
 for look in looks where !customSheets.contains(look.id) {
     try renderSheet(look.id, columns: columns, rows: animations.count) { ctx, col, row in

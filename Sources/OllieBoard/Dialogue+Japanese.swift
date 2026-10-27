@@ -783,6 +783,35 @@ let japaneseLines: [String: Lines] = [
             .knightOath: ["この剣に誓うニャ！", "誓いのもとに…突撃ニャ！"],
             .shieldBash: ["盾、前へ！ニャ！", "わが無敵の盾を見よ！"],
         ]),
+    // Gugugaga / Penguinistrator (Arknights: Endfield fan meme).
+    "gugugaga": Lines(
+        shortName: "ググガガ",
+        lines: [
+            .happy: ["ググガガ！♪", "小さな翼、大きなしあわせ！"],
+            .bored: ["おさかな、どこ？", "ググ…だれかいる？"],
+            .tedious: ["あと一歩、よちよち…", "ペンギンはおねむです。"],
+            .grumpy: ["ガガッ！", "つつかないでよ！"],
+            .kick: ["よちよちキック！", "小さな足で、えいっ！"],
+            .arrange: ["ペンギン行進！並んで！", "おさかなはここに。"],
+            .click: ["ググ？♡", "なでてくれるの？"],
+            .poke: ["あっ！フードがずれちゃう！"],
+            .wake: ["おさかなの夢だったのに…"],
+            .noIcons: ["おしまい！おやつにしよ？"],
+            .fail: ["翼が短すぎるよ！"],
+            .done: ["ググガガ！ぴかぴか！"],
+            .greet: ["%@、いっしょによちよちしよ！"],
+            .greetBack: ["ググ！こんにちは、%@！"],
+            .wakeOther: ["%@、ペンギン行進が始まるよ！"],
+            .hit: ["%@！ふわふわおなかに気をつけて！"],
+            .sorry: ["あっ…ググ、ごめんね。"],
+            .pranked: ["%@！びっくりしたよ！"],
+            .chased: ["緊急よちよち！"],
+            .comfort: ["%@、この翼につかまって。"],
+            .thanks: ["ありがとう、%@！ググ！"],
+            .together: ["%@、くっついてあったまろ。"],
+            .guguChant: ["ググ…ガガー！♪", "みんなでググガガ！"],
+            .bellySlide: ["おなかから、しゅーっ！", "ペンギン一羽、お届けです！"],
+        ]),
     "agent": Lines(
         shortName: "エージェント",
         lines: [
@@ -817,6 +846,8 @@ let japaneseLines: [String: Lines] = [
 ]
 
 let japaneseSkillNames: [Skill: String] = [
+    .guguChant: "ググガガ！",
+    .bellySlide: "おなかスライド",
     .mindRead: "心を読む",
     .readFriend: "友だちの心を読む",
     .bloodBurst: "血鬼術・爆血",

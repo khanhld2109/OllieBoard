@@ -788,6 +788,35 @@ let englishLines: [String: Lines] = [
             .knightOath: ["I swear upon my sword! Meow!", "By my oath... charge!"],
             .shieldBash: ["Shield, forward! Mrrr!", "Behold my mighty shield!"],
         ]),
+    // Gugugaga / Penguinistrator (Arknights: Endfield fan meme).
+    "gugugaga": Lines(
+        shortName: "Gugugaga",
+        lines: [
+            .happy: ["Gugu gaga! ♪", "Tiny flippers, big happiness!"],
+            .bored: ["Where did my fish go?", "Gugu... anyone there?"],
+            .tedious: ["One more waddle...", "This penguin needs a nap."],
+            .grumpy: ["GAGA!", "No poking the penguin!"],
+            .kick: ["Waddle out of the way!", "Tiny foot, big plans!"],
+            .arrange: ["Penguin parade! Line up!", "Every fish in its place."],
+            .click: ["Gugu? ♡", "A pat for the penguin?"],
+            .poke: ["Hey! My hood!"],
+            .wake: ["I was dreaming of fish..."],
+            .noIcons: ["All clear. Snack time?"],
+            .fail: ["My flippers are too short!"],
+            .done: ["Gugu gaga! All tidy!"],
+            .greet: ["%@! Waddle with me!"],
+            .greetBack: ["Gugu! Hello, %@!"],
+            .wakeOther: ["%@, the penguin parade is starting!"],
+            .hit: ["%@! Watch the fluffy belly!"],
+            .sorry: ["Oops... gugu sorry."],
+            .pranked: ["%@! You startled my beak!"],
+            .chased: ["Emergency waddle!"],
+            .comfort: ["%@, you can borrow my flipper."],
+            .thanks: ["Thank you, %@! Gugu!"],
+            .together: ["%@, let's huddle here."],
+            .guguChant: ["Gugu... GAGA! ♪", "Everybody gugu gaga!"],
+            .bellySlide: ["Belly first! Wheee!", "Special delivery: one penguin!"],
+        ]),
     "agent": Lines(
         shortName: "Agent",
         lines: [
@@ -822,6 +851,8 @@ let englishLines: [String: Lines] = [
 ]
 
 let englishSkillNames: [Skill: String] = [
+    .guguChant: "Gugu Gaga!",
+    .bellySlide: "Belly slide",
     .mindRead: "Read your mind",
     .readFriend: "Read a friend's mind",
     .bloodBurst: "Blood Demon Art: Exploding Blood",

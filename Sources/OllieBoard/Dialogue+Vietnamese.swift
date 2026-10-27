@@ -784,6 +784,35 @@ let vietnameseLines: [String: Lines] = [
             .knightOath: ["Ta xin thề trên thanh kiếm này! Meo!", "Theo lời thề... xung phong!"],
             .shieldBash: ["Khiên, tiến lên! Grừ!", "Hãy xem tấm khiên vĩ đại của ta!"],
         ]),
+    // Gugugaga / Penguinistrator (Arknights: Endfield fan meme).
+    "gugugaga": Lines(
+        shortName: "Gugugaga",
+        lines: [
+            .happy: ["Gugu gaga! ♪", "Cánh bé xíu, vui thiệt nhiều!"],
+            .bored: ["Cá của tui đâu rồi?", "Gugu... có ai hông?"],
+            .tedious: ["Lạch bạch thêm xíu nữa...", "Chim cánh cụt cần ngủ rồi."],
+            .grumpy: ["GAGA!", "Đừng chọt chim cánh cụt mà!"],
+            .kick: ["Né chân vịt nè!", "Chân nhỏ, tham vọng lớn!"],
+            .arrange: ["Đoàn chim cánh cụt, xếp hàng!", "Mỗi con cá một chỗ."],
+            .click: ["Gugu? ♡", "Xoa đầu tui hả?"],
+            .poke: ["Ê! Lệch mũ tui rồi!"],
+            .wake: ["Đang mơ thấy cá mà..."],
+            .noIcons: ["Dọn xong rồi. Ăn cá nha?"],
+            .fail: ["Cánh tui ngắn quá!"],
+            .done: ["Gugu gaga! Gọn gàng rồi!"],
+            .greet: ["%@! Đi lạch bạch với tui nè!"],
+            .greetBack: ["Gugu! Chào %@!"],
+            .wakeOther: ["%@, dậy đi diễu hành nè!"],
+            .hit: ["%@! Coi chừng cái bụng mềm!"],
+            .sorry: ["Úi... gugu xin lỗi."],
+            .pranked: ["%@! Hết hồn cái mỏ!"],
+            .chased: ["Lạch bạch khẩn cấp!"],
+            .comfort: ["%@, cho mượn cái cánh nè."],
+            .thanks: ["Cảm ơn %@! Gugu!"],
+            .together: ["%@, ngồi sát cho ấm nha."],
+            .guguChant: ["Gugu... GAGA! ♪", "Cả nhà gugu gaga nào!"],
+            .bellySlide: ["Bụng dẫn đường! Vèo!", "Giao hàng: một bé cánh cụt!"],
+        ]),
     "agent": Lines(
         shortName: "Agent",
         lines: [
@@ -818,6 +847,8 @@ let vietnameseLines: [String: Lines] = [
 ]
 
 let vietnameseSkillNames: [Skill: String] = [
+    .guguChant: "Gugu Gaga!",
+    .bellySlide: "Trượt bụng",
     .mindRead: "Đọc suy nghĩ của bạn",
     .readFriend: "Đọc suy nghĩ bạn bè",
     .bloodBurst: "Huyết quỷ thuật: Bộc Huyết",

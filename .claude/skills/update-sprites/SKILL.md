@@ -1,52 +1,76 @@
 ---
 name: update-sprites
-description: Redraw an OllieBoard character's sprite sheet with Gemini-generated art (Gemini web app driven through Claude in Chrome), assemble the images into the 8x16 sheet, fix the skin colour, install it and test it in the app. Use when asked to update, redraw or replace a character's sprite (e.g. "update the sprite for luffy"). For a brand-new character use the add-character skill, which calls this one for the art.
+description: Redraw or replace an OllieBoard character sprite with the requested image generator, assemble native RGBA atlases or Gemini strips, and verify before installation. For a new character use add-character.
 ---
 
-# Redraw a character's sprite with Gemini + Claude in Chrome
+# Update OllieBoard sprites
 
-The sheets in `Sources/OllieBoard/Resources/Sprites/<id>.png` are normally drawn by code (`Sources/SpriteGen`). This skill replaces one sheet with AI-generated art. `assemble.py --install` also lists the id in `Sprites/custom-sheets.txt`, which SpriteGen (`make sprites` / `make app`) reads and leaves alone; without that line every `make app` would redraw the sheet from code and lose the new art.
+Run commands from the OllieBoard repository root. These instructions are shared by Claude Code and Codex: the canonical folder is `.claude/skills/update-sprites`; `.agents/skills/update-sprites` links here. Use the tools actually exposed by the current session.
 
-## Sheet format (what the app expects)
-- 2048x4096 px PNG, 8 columns x 16 rows of 256x256 px cells, transparent background, character faces RIGHT, feet at (128, 244) px in each cell (`layout.json` anchor 64,122 pt). A smaller sheet crashes the app when the character loads (SpriteSheet.swift:95).
-- Rows (frames): 0 idle 4, 1 walk 8, 2 run 6, 3 kick 7, 4 carry 8, 5 happy 6, 6 bored 4, 7 yawn 8, 8 sleep 4, 9 grumpy 4, 10 dragged 4, 11 surprised 2, 12 work 4, 13 sad 4, 14 skill1 8, 15 skill2 8. Agent mascots (claude, codex, gemini, opencode, cursor, aider) only use rows 0-13.
-- What the rows show in the game (the prompts already say this): `carry` is both arms straight up holding NOTHING (the app puts a desktop icon there), `dragged` is lifted by both hands with arms straight up and legs dangling (not by the scruff), `work` sits with a laptop on the lap.
-- Skill rows play 8 frames in 1 second and `Pet.swift` `skillPlan` times hits and effects to frame numbers (e.g. Luffy's fist lands on frame 5, Cat Knight's shield on frame 4, Zenitsu draws on frame 5). The character table in `gen_prompts.py` states these frames in each skill prompt; check them in the preview. Effects drawn by the game at runtime (Trump's wall, Xi's tanks, Frieren's closed chest, flames, coins...) must not be drawn into the row.
-- `layout.json` and `effects.png` are shared by all characters; do not touch them.
+## Tools and scope
 
-## Prerequisites (check with the user)
-- Chrome with the Claude in Chrome extension, signed in to gemini.google.com with image generation.
-- Chrome's download location set to the `raw/` folder printed in step 1 (Settings -> Downloads -> Location), or files land in ~/Downloads and must be moved. Remind the user to restore it afterwards.
-- `python3 -m venv .venv && .venv/bin/pip install -r scripts/sprites/requirements.txt` (once; Claude may run this).
-- The user (and the repo owner) accept AI-generated art for this character: Gemini's style is a shaded cartoon, not the flat chibi look of the code-drawn sprites. Politician caricatures (trump, putin, xi, kim): Gemini may refuse real people; if it does, stop and keep the code-drawn sheet, do not try to get around it.
+- Use the image provider the user requested. For the built-in image tool and native transparent atlases, read [native-atlas](references/native-atlas.md) and use that generation/assembly route instead of the Gemini sections below. The Gemini strip route remains available when requested. Do not silently switch providers or introduce a paid API.
+- Claude Code may use Claude in Chrome when available. Codex may use its available browser/computer-use tool. Neither host guarantees a browser, image upload, download, page JavaScript, or login. Read the chosen tool's instructions first; generated task text does not grant extra capabilities.
+- If automation cannot upload/save native images, generate the task file and hand it to the user for manual execution. Let the user handle login. Report exactly which rows remain; do not claim browser execution happened.
+- Use supplied design decisions and authorization. Ask only for missing choices that materially affect the character. Upload only the selected character reference; do not send repository source or unrelated images.
 
-## Steps
-1. **Prompts.** `.venv/bin/python scripts/sprites/gen_prompts.py <id>` writes `build/sprites/<id>/chrome-task.md` (instructions for Chrome + one model-sheet prompt + one prompt per row) and creates `build/sprites/<id>/raw/`. `--list` shows known ids. Designs that exist only in this game (`ORIGINAL`: Cat Knight and the mascots) get `<id>_reference.png`, cut from the current sheet, attached to the model-sheet prompt; `--reference picture.png` attaches your own picture instead.
-2. **Generate.** Either the user pastes the whole `chrome-task.md` into Claude in Chrome, or Claude drives Chrome itself with the Claude in Chrome tools (ask which browser, and ask once before downloading the images). Rules either way:
-   - One Gemini chat per character; model sheet first, then each row prompt on its own, waiting until the image is fully drawn (no stop button, not grey).
-   - **Never use Gemini's "Download full size" button.** Tested on Zoro: it returned blurry, ghosted or half-grey upscales, sometimes of a different generation than the one on screen. Save the picture displayed in the chat with the canvas snippet in `chrome-task.md` (it is 1024 px wide; earlier answers still in the page can be saved the same way).
-   - Look at each image before saving; one picture per row name, never the same picture under two names.
-3. **Assemble and check.** `.venv/bin/python scripts/sprites/assemble.py <id>`.
-   - Every raw strip is checked first. **Rejected** strips (left empty): unfinished grey placeholder, the same picture as another row, heavy ghosting / motion blur, < 100 px per frame, far fewer frames than asked. The log ends with a ready `gen_prompts.py <id> --rows ...` command.
-   - **View `build/sprites/<id>/raw-contact.png`** (all raw strips with their verdicts): the checks cannot see a wrong animation in the right file (e.g. a sitting pose saved as `dragged`) or one blurry face.
-   - Log notes: `count differs, resampled` (frames picked evenly; for skill rows check the action frame did not move), `EQUAL SPLIT - check`, `replaced bad frames [..]` (cut/broken frames swapped for the nearest good one), `MISSING`.
-   - **Skin colour.** Gemini draws skin darker and honey-yellow (Luffy #F1BC8F, Zoro #F5C19B) while the game's skin is a pale peach #FFEBDE (own tones for Cat Knight, Putin, Trump in `GAME_SKIN`). The script finds the character's main skin colour and moves colours of that hue towards the game's tone, keeping shading, outlines, hair, clothes and blush. `--skin` sets the strength: default 0.6 (keeps a light tan; the user's choice on Zoro), 0.9 = nearly the game's pale peach (judged too pale), 0 = off. It is off by default for Cat Knight (`NO_SKIN_FILTER`, her fur would be bleached). The log prints `skin: Gemini #.. -> game #..`.
-   - Rows are scaled to one character height (sitting rows 87%, as in the code-drawn sheets) and jumps keep their height above the ground.
-   - **Look at `build/sprites/<id>/<id>-preview.png`**: no cut frames, no dark bars, feet on one line, similar size across rows, skill action on the expected frames.
-4. **Redo bad rows.** `gen_prompts.py <id> --rows 2,5,9` writes a task for just those rows in the same Gemini chat. Save them, run step 3 again (the newest file for a row wins).
-5. **Install and test.** `assemble.py <id> --install` (refuses while rows are missing; mascots need rows 0-13 only; adds the id to `custom-sheets.txt`), then `swift build -c release --product OllieBoard`. Run only this character without touching the user's installed app: `defaults write OllieBoard enabledCharacters -array <id>` and start `$(swift build -c release --show-bin-path)/OllieBoard`. Characters kick real Desktop icons: tell the user macOS may ask for Finder access (deny it to only watch). Claude usually cannot screenshot other apps' windows, so ask the user to check: standing, walking, click (happy), 4 quick clicks (grumpy), drag, right-click both skills. When done: kill that process and `defaults delete OllieBoard enabledCharacters`.
+## Sprite contract
 
-## Known limits
-- The automatic checks catch gross errors only; always look at `raw-contact.png` and the preview.
-- A few frames (about 5 of 90 on Zoro) can come out cut at a cell edge when Gemini draws a sword or arm across a cell border; redo that row if it matters.
-- Gemini ignores frame counts (resampled) and the 8-frame rows are about 128 px per frame, so they are slightly soft at 256 px.
-- The skin filter is hue-based: things with a skin-like hue (a straw hat, wood) shift slightly, and it cannot tell a deliberately tanned character from Gemini's cast; lower `--skin` or add the tone to `GAME_SKIN`.
-- Props change the measured height (a big aura or a raised object makes that row's character a bit smaller).
-- The Gemini API has no free tier for image models; this workflow uses the Gemini web app.
-- `swift run SpriteGen` currently crashes on macOS 15 with a CoreGraphics assertion while drawing the sheets after Eren (seen with the unmodified code too), so `make app` fails there; that is unrelated to these scripts.
+Check `Sources/OllieBoard/SpriteSheet.swift`, `Resources/Sprites/layout.json` under the same directory, and the character's `Pet.swift` skill plan when changing animations.
 
-## Files
-- `scripts/sprites/gen_prompts.py`: character table (looks and skill rows as SpriteGen draws them) + prompt/task generator.
-- `scripts/sprites/assemble.py`: raw strips -> checked, colour-corrected sheet (+ preview, contact sheet, `--install`).
-- `Sources/OllieBoard/Resources/Sprites/custom-sheets.txt`: ids SpriteGen must not redraw.
-- Work output: `build/sprites/<id>/` (git-ignored).
+- PNG RGBA, 2048 × 4096 px: 8 columns × 16 rows of 256 px cells. Character faces right; feet anchor is (128, 244) px, corresponding to (64, 122) points.
+- Rows and frame counts: idle 4, walk 8, run 6, kick 7, carry 8, happy 6, bored 4, yawn 8, sleep 4, grumpy 4, dragged 4, surprised 2, work 4, sad 4, skill1 8, skill2 8. Agent mascots use rows 0–13; the complete sheet still has 16 rows.
+- Carry: arms up, holding nothing; the app supplies the desktop icon. Dragged: lifted by both hands, legs dangling. Work: seated with a laptop.
+- Skill rows must preserve all 8 frames and their action timing from `Pet.swift`. Runtime effects must not be duplicated in the art. Regenerate a wrong action frame instead of resampling it.
+- Preserve unrelated character sheets, `layout.json`, and `effects.png`.
+
+## Generate
+
+1. Select an existing id with `python3 scripts/sprites/gen_prompts.py --list`. Read its `CHARACTERS` entry and compare it with the current design and skill plan; the table is a snapshot, not the source of truth.
+2. Prepare dependencies if missing:
+
+   ```sh
+   python3 -m venv .venv
+   .venv/bin/python -m pip install -r scripts/sprites/requirements.txt
+   ```
+
+3. Run `.venv/bin/python scripts/sprites/gen_prompts.py <id>`. It writes `build/sprites/<id>/gemini-task.md` and creates `raw/`. Original characters need a reference: existing originals get an idle-frame crop; a new original needs `--reference /path/to/approved-picture.png`.
+4. Execute that task with the available browser tool, or hand it to the user. Use one Gemini chat per character: model sheet first, then one row at a time. For retries, keep that chat and use `--rows 2,5,9`. Record the chat URL if available so the next turn can resume.
+5. Save the native image to `raw/<id>_row<N>_<animation>.png`, matching the row and animation exactly. Check that the saved file matches the completed image in the chat. Do not use a page screenshot or select an image only because it is last/largest in the DOM.
+
+Earlier PR experiments found corrupt or blurry results from Gemini's “Download full size” button. Treat that as an observed failure mode, not a permanent browser rule: inspect the saved file and use another supported save action or manual handoff if needed. Do not inject an undocumented canvas/download script or change the browser's global download directory. Move only known files created by this task.
+
+Retry a bad row at most twice. Stop and report quota, login, refusal, or unsupported-browser blockers with completed and missing rows. Do not try to circumvent a provider refusal.
+
+## Assemble and inspect
+
+Run `.venv/bin/python scripts/sprites/assemble.py <id>` without `--install` first. Inspect both `build/sprites/<id>/raw-contact.png` and `<id>-preview.png` using the current host's image viewer. If none is available, hand the previews to the user and leave visual validation pending.
+
+- Reject wrong poses, clipped limbs, ghosting, inconsistent design/scale, baseline errors, missing frames, and incorrectly timed skill actions. Heuristic checks cannot establish visual correctness.
+- The assembler rejects missing/rejected rows at installation and refuses repaired/resampled skill rows. Non-skill rows can be resampled or have a bad frame replaced; review every such warning before installing.
+- `--keep-bad` is for debugging previews only and cannot be combined with `--install`.
+- Skin correction defaults to 0.6 for the original Gemini workflow; `--skin 0` preserves input colours. Inspect skin and similarly coloured props. For fur/robots, update `NO_SKIN_FILTER` as appropriate. Use the same chosen skin value for preview and installation.
+- The current chroma-key pipeline expects magenta RGB strips. It includes a bottom-right watermark mask and border cleanup that can erase artwork; inspect those areas. Do not feed another provider's transparent images through it unchanged.
+
+Redo failed rows in the same Gemini chat, then reassemble. Do not install merely because the command completed.
+
+## Install and verify
+
+Once the previews pass and installation is within the user's request:
+
+1. Run `.venv/bin/python scripts/sprites/assemble.py <id> --install` with the same skin option as the preview. It writes only that character's sheet and adds its id to `Sources/OllieBoard/Resources/Sprites/custom-sheets.txt`.
+2. Verify the id is listed and `Sources/SpriteGen/main.swift` skips listed ids. That guard prevents `make sprites` / `make app` from overwriting custom art. Do not regenerate every source sprite as a smoke test; use a temporary output directory to test SpriteGen.
+3. Run `swift build -c release --product OllieBoard`. Build success proves compilation, not animation quality.
+4. When a live app test is requested, use the built development executable. For example, for Luffy:
+
+   ```sh
+   "$(swift build -c release --show-bin-path)/OllieBoard" \
+     -enabledCharacters '("luffy")' \
+     -agentCharacters '<?xml version="1.0"?><plist version="1.0"><false/></plist>' \
+     -language vi
+   ```
+
+   Replace luffy with the selected id; relaunch with language vi/en/ja to check translations. These launch arguments override preferences for that process and disable monitoring of real AI sessions. The XML boolean is intentional: this app reads `agentCharacters` with `object(forKey:) as? Bool`, so plain `NO` remains a string and does not disable it. Do not use `defaults write/delete`, toggle saved settings, replace the installed app, or kill unrelated app instances. Stop only the process you started. Launch a desktop interaction test only when the user has authorized it, explaining that the app can move real Desktop icons through Finder.
+5. Inspect idle/walk, happy click, grumpy clicks, dragging, and both skills with dialogue/effects. Use available screenshot/computer-use tools; otherwise request user verification. Report build checks, preview inspection, and live app validation separately.
+
+Report the character, changed files, output paths, unresolved warnings, and coverage. Leave commit/push/PR actions to a separate user request.

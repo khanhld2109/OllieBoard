@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Writes the Claude-in-Chrome task (instructions + Gemini prompts) for one character.
+"""Writes an agent-neutral Gemini browser task (instructions + Gemini prompts) for one character.
 
   python3 scripts/sprites/gen_prompts.py luffy                 # model sheet + all 16 rows
   python3 scripts/sprites/gen_prompts.py luffy --rows 2,5,9    # only redo these rows (no model sheet)
   python3 scripts/sprites/gen_prompts.py --list                # known character ids
   python3 scripts/sprites/gen_prompts.py newid --reference art.png   # model sheet drawn from your own reference picture
 
-Output: build/sprites/<id>/chrome-task.md (paste its whole content into Claude in Chrome).
+Output: build/sprites/<id>/gemini-task.md (run with available browser tools or hand to the user).
 Downloads must be saved in build/sprites/<id>/raw/ (created here).
 To add a character, add a line to CHARACTERS below.
 """
@@ -16,6 +16,10 @@ import argparse, os, sys
 # Looks and skill rows follow what SpriteGen draws today (Looks.swift, Skills.swift, SkillsAnime.swift), and the frame where the
 # action lands matters: Pet.swift times hits and effects to those frames (8 frames at 8 fps = 1 second per skill row).
 CHARACTERS = {
+"gugugaga": ("Gugugaga / Penguinistrator (female Endministrator, Arknights: Endfield fan meme)",
+         "tiny chibi girl in a round black penguin onesie, cream belly, black bob and bangs, huge grey eyes, pink cheeks, penguin hood with white eyes and yellow beak above forehead, yellow feet, silver collar clasp",
+         "Gugu Gaga cheer: frames 1-3 inhale and sway, frame 4 raises flippers, frame 5 opens flippers wide with a joyful open mouth for the shout, frames 6-8 settle; hearts and sparkles are runtime effects, do not draw them",
+         "belly slide: frames 1-2 lean forward, frame 3 crouches, frame 4 lands on the belly facing RIGHT and begins sliding, frames 5-6 glide with yellow feet behind, frames 7-8 push back up; the game moves the character on frame 4"),
 "anya": ("Anya Forger (Spy x Family)", "pink shoulder-length hair flipped outward, two black horn-shaped hair ornaments, green eyes, black Eden Academy dress",
          "mind reading: arms spread up, sparkling eyes, pink telepathy waves coming off the hair ornaments",
          "smug: hands on hips, half-lidded eyes, little smirk, a small yellow star next to her"),
@@ -130,17 +134,23 @@ EXTRA = (" IMPORTANT: draw each character SMALLER, occupying only about 60% of t
  "Every frame must be a crisp, sharp, single clean drawing with solid flat colors: absolutely no motion blur, no ghost or afterimage, no speed lines, no smear.")
 ARM = " The stretched arm must stay inside its own cell: draw the character on the LEFT part of the cell and keep the extended arm short enough to end before the cell's right edge."
 
-HEAD = """TASK for Claude in Chrome (do it in the browser; I am already signed in to Gemini):
+HEAD = """TASK for Gemini web (Codex, Claude Code, or manual execution):
+
+Use the browser tools available in this session and follow their documented capabilities.
+Do not assume Claude in Chrome, page JavaScript, downloads, uploads, or an authenticated session exist.
+If login is required, let the user sign in. If the browser cannot save or upload images, hand this task to the user.
+Keep Gemini as the image provider unless the user requests another one.
 
 1. {open_chat}
 2. {send}
-3. Saving each image. DO NOT use Gemini's "Download full size" button: its upscaler returns blurry, ghosted or half-grey copies that differ from the picture on screen. Instead save the picture that is displayed, with this JavaScript run in the Gemini tab (javascript tool), once the answer has finished drawing (no stop button, image fully visible, not grey):
-   const imgs=[...document.querySelectorAll('img')].filter(i=>i.naturalWidth>800); const im=imgs[imgs.length-1]; const c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight; c.getContext('2d').drawImage(im,0,0); const blob=await new Promise(r=>c.toBlob(r,'image/png')); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='NAME'; document.body.appendChild(a); a.click(); a.remove();
-   Replace NAME with the file name given in the === line ({pattern}). It is saved to Chrome's download folder; the target folder is {raw}. If the file lands elsewhere, tell me the exact file names and the order so I can move them. Never add suffixes like _v2 or (1); if a file with that name exists, replace it.
-4. Before saving each row image, check it: exactly the requested number of characters, no divider lines, no character touching a cell edge. If it fails, ask Gemini to redo that row (up to 2 retries) and download only the good one. If it still fails, download the best one and tell me which row.
-5. Gemini may stop after about 10 images per turn. If so, reply "Ready, continue with the next rows" and carry on.
+3. Save each completed image using a supported browser download/save action. Inspect the actual image and associate it with its row; do not select an image just because it is the last or largest on the page.
+   Files go to {raw}, named {pattern}. Save the image at native resolution, not a screenshot of the page.
+   Prior Gemini runs produced blurry or half-grey files via "Download full size". Compare every saved file with the displayed image; if the download is corrupt, use a supported save-image action or ask the user to save it manually.
+   Do not change the browser's global download folder. Move only the exact files downloaded for this task.
+4. Check each row before saving: exact frame count, no dividers, no clipped character, one consistent design. Retry a bad row at most twice, then report it as unresolved. Do not install unresolved rows.
+5. Wait for each image to finish before continuing. On quota, login, or browser failure, report the saved rows and where to resume; do not loop indefinitely.
 6. {others}
-7. When finished, list the downloaded file names and stop.
+7. List the saved filenames and unresolved rows. The next step is local assembly and visual inspection, not automatic installation.
 
 PROMPTS (send the text only, not the === line):
 
@@ -170,16 +180,24 @@ def main():
     ap.add_argument("--reference", help="picture of the character to attach to the model-sheet prompt (needed for a new original design)")
     o = ap.parse_args()
     if o.list or not o.id:
-        sys.exit("known ids: " + ", ".join(CHARACTERS))
+        print("known ids: " + ", ".join(CHARACTERS))
+        return
     if o.id not in CHARACTERS: sys.exit(f"unknown id {o.id!r}; add it to CHARACTERS. Known: {', '.join(CHARACTERS)}")
     name, look, s1, s2 = CHARACTERS[o.id]
     repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     out = os.path.join(repo, "build", "sprites", o.id); raw = os.path.join(out, "raw")
-    os.makedirs(raw, exist_ok=True)
-    wanted = None if not o.rows else {int(x) for x in o.rows.split(",")}
     rows = [(i, *r) for i, r in enumerate(ROWS) if s1 or not r[0].startswith("skill")]
-    if wanted: rows = [r for r in rows if r[0] in wanted]
-    redo = bool(wanted)
+    wanted = None
+    if o.rows is not None:
+        try:
+            wanted = {int(x) for x in o.rows.split(",")}
+        except ValueError:
+            ap.error("--rows must be comma-separated row numbers")
+        if not wanted or not wanted <= {r[0] for r in rows}:
+            ap.error("--rows must name rows available for this character")
+        rows = [r for r in rows if r[0] in wanted]
+    os.makedirs(raw, exist_ok=True)
+    redo = wanted is not None
     body = ""
     ref = None
     if not redo and (o.reference or o.id in ORIGINAL):
@@ -210,9 +228,9 @@ def main():
     head = HEAD.format(open_chat=first, send=f"Send the prompts below ONE AT A TIME, in this order: {order}. Wait until each image is finished before sending the next one.",
                        raw=raw, pattern=f"{o.id}_rowN_name.png (the model sheet: {o.id}_step0_model_sheet.png)",
                        others="Do not redo any other row." if redo else "Do not skip any prompt.")
-    path = os.path.join(out, "chrome-task.md")
+    path = os.path.join(out, "gemini-task.md")
     open(path, "w").write(head + body)
-    print(f"Wrote {path}\nDownloads go to {raw}\nPaste the content of chrome-task.md into Claude in Chrome.")
+    print(f"Wrote {path}\nDownloads go to {raw}\nUse gemini-task.md with your available browser tools, or hand it to the user.")
 
 if __name__ == "__main__":
     main()

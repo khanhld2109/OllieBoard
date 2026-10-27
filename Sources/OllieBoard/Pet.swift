@@ -1149,6 +1149,24 @@ final class Pet {
                            },
                            .play(.skill2, 1.6),
                            .play(.happy, 1.2, effect: .sparkle)])
+        case .guguChant:
+            // Frame 4 (zero-based) opens the flippers for the big "gaga!".
+            return engage([.line(.guguChant, to: nil),
+                           .hold(.skill1, 0.5),
+                           .run { [weak self] in
+                               guard let self else { return }
+                               self.view.sparks(color: Pet.thunder, for: 0.7)
+                               for friend in self.nearbyFriends(within: 420) { friend.receive(.applaud(self)) }
+                           },
+                           .hold(.skill1, 0.5),
+                           .play(.happy, 1.2, effect: .heart)])
+        case .bellySlide:
+            // Frame 3 starts the belly slide; hold continues the same animation clock.
+            return engage([.line(.bellySlide, to: nil),
+                           .hold(.skill2, 0.375),
+                           .run { [weak self] in self?.dash(140, color: Pet.water) },
+                           .hold(.skill2, 0.625),
+                           .play(.happy, 1, effect: .sparkle)])
         }
     }
 
