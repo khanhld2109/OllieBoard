@@ -82,8 +82,8 @@ OllieBoard checks GitHub for a newer release when it starts and every 6 hours. W
 To publish a release the updater will pick up, build the DMG with the new version and attach it to a `vX.Y` release:
 
 ```sh
-make dmg VERSION=1.1
-gh release create v1.1 build/OllieBoard-1.1.dmg --title "OllieBoard 1.1"
+make dmg VERSION=1.2.0
+gh release create v1.2.0 build/OllieBoard-1.2.0.dmg --title "OllieBoard 1.2.0"
 ```
 
 ## Build from source
@@ -98,7 +98,7 @@ make run
 | --- | --- |
 | `make app` | Regenerate the sprite sheets, build a release binary and wrap it as `build/OllieBoard.app`. |
 | `make run` | `make app`, then open the app. |
-| `make dmg` | `make app`, then package `build/OllieBoard-<VERSION>.dmg` (default `VERSION=1.1`). `VERSION` is also the app's version, which the updater compares with the latest release. |
+| `make dmg` | `make app`, then package `build/OllieBoard-<VERSION>.dmg` (default `VERSION=1.2.0`). `VERSION` is also the app's version, which the updater compares with the latest release. |
 | `make sprites` | Regenerate the sprite sheets only. |
 | `make clean` | Remove build output. |
 

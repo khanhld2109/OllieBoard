@@ -1,4 +1,4 @@
-VERSION ?= 1.1
+VERSION ?= 1.2.0
 APP     := build/OllieBoard.app
 DMG     := build/OllieBoard-$(VERSION).dmg
 STAGE   := build/dmg-stage

@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # The in-app updater compares this with the latest GitHub release tag (vX.Y).
-VERSION=${VERSION:-1.1}
+VERSION=${VERSION:-1.2.0}
 
 swift run -c release SpriteGen
 swift build -c release --product OllieBoard
