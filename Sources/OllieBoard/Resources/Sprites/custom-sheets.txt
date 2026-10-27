@@ -1,0 +1,3 @@
+# Sheets not drawn by SpriteGen (AI-made, see scripts/sprites). SpriteGen leaves these ids alone.
+zoro
+luffy
