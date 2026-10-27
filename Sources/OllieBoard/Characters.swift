@@ -30,6 +30,7 @@ enum Skill: String {
     case godspeed, chocolate        // Killua
     case chainJail, scarletEyes     // Kurapika
     case knightOath, shieldBash     // Cat Knight
+    case guguChant, bellySlide      // Gugugaga
 
     var title: String { skillNames[Language.current]?[self] ?? rawValue }
 }
@@ -46,6 +47,7 @@ enum Series: String, CaseIterable {
     case bocchi = "Bocchi the Rock!"
     case reZero = "Re:Zero"
     case catKnight = "Cat Knight"
+    case endfield = "Arknights: Endfield"
     case politics = "Chính trị"
 
     /// Series names stay as they are; only "politics" is translated.
@@ -172,6 +174,12 @@ let allCharacters: [Character] = [
         id: "catknight", name: "Cat Knight", series: .catKnight, walkSpeed: 85,
         weights: [.wander: 3, .kick: 2, .arrange: 1.5, .bored: 1, .sleep: 2, .grumpy: 0.5, .happy: 2.5, .social: 2.5, .skill: 1.2],
         grumpyAnim: .grumpy, shy: false, prankster: false, skills: [.knightOath, .shieldBash]),
+
+    // Penguinistrator: the Endministrator's playful chibi penguin meme form.
+    Character(
+        id: "gugugaga", name: "Gugugaga", series: .endfield, walkSpeed: 75,
+        weights: [.wander: 3, .kick: 0.8, .arrange: 1.8, .bored: 1.5, .sleep: 2.5, .grumpy: 0.4, .happy: 3, .social: 3, .skill: 1.3],
+        grumpyAnim: .grumpy, shy: false, prankster: true, skills: [.guguChant, .bellySlide]),
 
     // Playful political caricatures, same sketch skeleton as the anime cast.
     Character(

@@ -179,7 +179,15 @@ func renderSheet(_ name: String, columns: Int, rows: Int, draw: (CGContext, _ co
     try rep.representation(using: .png, properties: [:])!.write(to: outDir.appendingPathComponent("\(name).png"))
 }
 
-for look in looks {
+// Preserve sheets installed by scripts/sprites/assemble.py.
+let customSheetsURL = outDir.appendingPathComponent("custom-sheets.txt")
+let customSheetsText = FileManager.default.fileExists(atPath: customSheetsURL.path)
+    ? try String(contentsOf: customSheetsURL, encoding: .utf8) : ""
+let customSheets = Set(customSheetsText.split(whereSeparator: \.isNewline)
+    .map { $0.trimmingCharacters(in: .whitespaces) }
+    .filter { !$0.isEmpty && !$0.hasPrefix("#") })
+
+for look in looks where !customSheets.contains(look.id) {
     try renderSheet(look.id, columns: columns, rows: animations.count) { ctx, col, row in
         let frames = animations[row].frames
         if col < frames.count { drawCharacter(ctx, frames[col], look) }
@@ -200,4 +208,6 @@ let json: [String: Any] = [
 ]
 try JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys])
     .write(to: outDir.appendingPathComponent("layout.json"))
-print("Wrote \(looks.count) sheets (\(columns)x\(animations.count) frames) + effects.png to \(outDir.path)")
+let kept = looks.filter { customSheets.contains($0.id) }.map(\.id)
+print("Wrote \(looks.count - kept.count) sheets (\(columns)x\(animations.count) frames) + effects.png to \(outDir.path)"
+      + (kept.isEmpty ? "" : "; kept custom sheets: \(kept.joined(separator: ", "))"))
